@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Complaint #{{ c.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+
+    <a href="{{ url_for('admin_dashboard') }}">&larr; Back to dashboard</a>
+
+    <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
+    <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
+    <p><strong>Current status:</strong>
+        <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
+    <p><strong>Description:</strong></p>
+    <div class="box">{{ c.description }}</div>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+        <label>Status</label>
+        <select name="status">
+            {% for s in statuses %}
+                <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Resolution remarks (required when Resolved)</label>
+        <textarea name="resolution" rows="4">{{ c.resolution or '' }}</textarea>
+
+        <button type="submit">Update Complaint</button>
+    </form>
+
+</div>
+</body>
+</html>

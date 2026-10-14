@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+
+    <div class="topbar">
+        <h1>Admin Dashboard</h1>
+        <span>Logged in as {{ session['user_name'] }} | <a href="{{ url_for('logout') }}">Logout</a></span>
+    </div>
+
+    <div class="cards">
+        {% for s in statuses %}
+            <div class="card">
+                <div class="num">{{ counts[s] }}</div>
+                <div>{{ s }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="filters">
+        Filter:
+        <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if not selected }}">All</a>
+        {% for s in statuses %}
+            <a href="{{ url_for('admin_dashboard', status=s) }}" class="{{ 'active' if selected == s }}">{{ s }}</a>
+        {% endfor %}
+    </div>
+
+    <table>
+        <tr>
+            <th>ID</th><th>Title</th><th>Submitted by</th><th>Status</th><th>Action</th>
+        </tr>
+        {% for c in complaints %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.title }}</td>
+            <td>{{ users.get(c.user_id, 'Unknown') }}</td>
+            <td><span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></td>
+            <td><a class="btn" href="{{ url_for('admin_complaint', complaint_id=c.id) }}">Manage</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No complaints found.</td></tr>
+        {% endfor %}
+    </table>
+
+</div>
+</body>
+</html>

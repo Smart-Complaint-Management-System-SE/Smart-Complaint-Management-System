@@ -1,0 +1,25 @@
+body { font-family: Arial, Helvetica, sans-serif; background: #f4f6f9; margin: 0; color: #222; }
+.container { max-width: 960px; margin: 30px auto; background: #fff; padding: 24px 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.topbar { display: flex; justify-content: space-between; align-items: center; }
+a { color: #2457c5; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.cards { display: flex; gap: 16px; margin: 20px 0; }
+.card { flex: 1; background: #eef3fb; border-radius: 8px; padding: 14px; text-align: center; }
+.card .num { font-size: 28px; font-weight: bold; }
+.filters { margin-bottom: 14px; }
+.filters a { margin-right: 10px; padding: 4px 10px; border-radius: 14px; }
+.filters a.active { background: #2457c5; color: #fff; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid #e3e6eb; text-align: left; }
+th { background: #f0f2f5; }
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 13px; }
+.badge.pending { background: #fff1c2; }
+.badge.in-progress { background: #d6e6ff; }
+.badge.resolved { background: #d3f2d6; }
+.btn, button { background: #2457c5; color: #fff; border: none; padding: 6px 14px; border-radius: 5px; cursor: pointer; }
+.btn:hover, button:hover { background: #1b45a0; text-decoration: none; }
+label { display: block; margin-top: 14px; font-weight: bold; }
+select, textarea, input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccd; border-radius: 5px; }
+button { margin-top: 16px; }
+.box { background: #f7f8fa; padding: 12px; border-radius: 6px; }
+.error { color: #c0392b; font-weight: bold; }
