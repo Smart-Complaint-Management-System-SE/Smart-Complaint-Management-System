@@ -2,6 +2,7 @@
 
 Usage:  python3 make_admin.py admin@test.com
 Register the account through /register first. Use test accounts only.
+SECRET_KEY must be set, the same as when running the app (see README).
 """
 import sys
 from app import app, db, User

@@ -1,14 +1,49 @@
+import os
+import secrets
+from datetime import timedelta
+
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, render_template, request, session, redirect, url_for, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "scms-development-secret-key"
+
+app.secret_key = os.environ.get("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError(
+        "SECRET_KEY is not set. Set the SECRET_KEY environment variable "
+        "before starting the app (see README)."
+    )
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SESSION_COOKIE_SECURE") == "1"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///complaints.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
+
+def csrf_token():
+    """Return this session's CSRF token, creating it on first use."""
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(32)
+    return session["csrf_token"]
+
+
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+
+@app.before_request
+def check_csrf():
+    """Reject any POST that does not carry this session's CSRF token."""
+    if request.method == "POST":
+        expected = session.get("csrf_token")
+        sent = request.form.get("csrf_token", "")
+        if not expected or not secrets.compare_digest(expected, sent):
+            abort(400)
 
 
 class User(db.Model):
@@ -73,6 +108,8 @@ def login():
 
         if user and check_password_hash(user.password, password):
 
+            session.clear()
+            session.permanent = True
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
@@ -216,4 +253,4 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")

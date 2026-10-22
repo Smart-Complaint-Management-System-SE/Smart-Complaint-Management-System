@@ -8,6 +8,7 @@
     <h1>Submit a Complaint</h1>
 
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <label>Complaint Title:</label>
         <br>
