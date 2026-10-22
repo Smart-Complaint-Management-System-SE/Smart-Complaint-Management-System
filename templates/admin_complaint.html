@@ -21,6 +21,7 @@
     {% endif %}
 
     <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>Status</label>
         <select name="status">
             {% for s in statuses %}

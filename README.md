@@ -36,6 +36,25 @@ The system supports three complaint statuses:
 - **In Progress** – Complaint is currently being handled.
 - **Resolved** – Complaint has been resolved by the administrator.
 
+## Configuration
+
+The app reads its settings from environment variables. It will not start without `SECRET_KEY`.
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SECRET_KEY` | Yes | Signs session cookies. Use a long random value and never commit it. |
+| `FLASK_DEBUG` | No | Set to `1` to turn on debug mode for local development. Off by default. |
+| `SESSION_COOKIE_SECURE` | No | Set to `1` when the app is served over HTTPS, so session cookies are only sent over HTTPS. |
+
+Generate a key and start the app:
+
+```bash
+export SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+python3 app.py
+```
+
+Sessions expire after 30 minutes of inactivity. All forms include a CSRF token, and a POST request without a valid token is rejected with 400 Bad Request.
+
 ## Technology Stack
 
 - **Backend:** Python, Flask
