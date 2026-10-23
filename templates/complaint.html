@@ -7,17 +7,41 @@
 
     <h1>Submit a Complaint</h1>
 
+    {% if error %}
+        <p style="color: red;"><strong>{{ error }}</strong></p>
+    {% endif %}
+
     <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <label>Complaint Title:</label>
         <br>
-        <input type="text" name="title" required>
+        <input
+            type="text"
+            name="title"
+            value="{{ request.form.get('title', '') }}"
+            required
+        >
+
+        <br><br>
+
+        <label>Category:</label>
+        <br>
+        <input
+            type="text"
+            name="category"
+            value="{{ request.form.get('category', '') }}"
+            required
+        >
+
         <br><br>
 
         <label>Description:</label>
         <br>
-        <textarea name="description" required></textarea>
+        <textarea
+            name="description"
+            required
+        >{{ request.form.get('description', '') }}</textarea>
+
         <br><br>
 
         <button type="submit">Submit Complaint</button>

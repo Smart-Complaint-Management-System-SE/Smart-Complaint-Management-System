@@ -58,6 +58,7 @@ class Complaint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(50), default="Pending")
     resolution = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -69,47 +70,47 @@ def home():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    error = None
 
     if request.method == "POST":
-
-        name = request.form["name"]
-        email = request.form["email"]
+        name = request.form["name"].strip()
+        email = request.form["email"].strip()
         password = request.form["password"]
 
-        hashed_password = generate_password_hash(password)
+        if not name or not email or not password:
+            error = "Name, email, and password are required."
+        else:
+            existing_user = User.query.filter_by(email=email).first()
 
-        user = User(
-            name=name,
-            email=email,
-            password=hashed_password
-        )
+            if existing_user:
+                error = "Email already registered. Please use another email."
+            else:
+                hashed_password = generate_password_hash(password)
 
-        existing_user = User.query.filter_by(email=email).first()
+                user = User(
+                    name=name,
+                    email=email,
+                    password=hashed_password
+                )
 
-        if existing_user:
-            return "Email already registered. Please use another email."
+                db.session.add(user)
+                db.session.commit()
 
-        db.session.add(user)
-        db.session.commit()
+                return "Registration successful!"
 
-        return "Registration successful!"
-
-    return render_template("register.html")
+    return render_template("register.html", error=error)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    error = None
 
     if request.method == "POST":
-
         email = request.form["email"]
         password = request.form["password"]
 
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
-
-            session.clear()
-            session.permanent = True
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
@@ -119,9 +120,9 @@ def login():
 
             return f"Welcome, {user.name}!"
 
-        return "Invalid email or password."
+        error = "Invalid email or password."
 
-    return render_template("login.html")
+    return render_template("login.html", error=error)
 
 @app.route("/logout")
 def logout():
@@ -140,27 +141,33 @@ def dashboard():
 
 @app.route("/complaint", methods=["GET", "POST"])
 def complaint():
-
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    error = None
+
     if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        category = request.form.get("category", "").strip()
 
-        title = request.form["title"]
-        description = request.form["description"]
+        # Validate required fields
+        if not title or not description or not category:
+            error = "Title, description, and category are required."
+        else:
+            new_complaint = Complaint(
+                title=title,
+                description=description,
+                category=category,
+                user_id=session["user_id"]
+            )
 
-        new_complaint = Complaint(
-            title=title,
-            description=description,
-            user_id=session["user_id"]
-        )
+            db.session.add(new_complaint)
+            db.session.commit()
 
-        db.session.add(new_complaint)
-        db.session.commit()
+            return "Complaint submitted successfully!"
 
-        return "Complaint submitted successfully!"
-
-    return render_template("complaint.html")
+    return render_template("complaint.html", error=error)
 
 @app.route("/complaints")
 def complaints():
