@@ -7,6 +7,8 @@
 
     <h1>Submit a Complaint</h1>
 
+    {% include '_logout.html' %}
+
     {% if error %}
         <p style="color: red;"><strong>{{ error }}</strong></p>
     {% endif %}

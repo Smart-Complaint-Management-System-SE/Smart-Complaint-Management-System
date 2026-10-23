@@ -7,7 +7,10 @@
 <body>
 <div class="container">
 
-    <a href="{{ url_for('admin.admin_dashboard') }}">&larr; Back to dashboard</a>
+    <div class="topbar">
+        <a href="{{ url_for('admin.admin_dashboard') }}">&larr; Back to dashboard</a>
+        {% include '_logout.html' %}
+    </div>
 
     <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
     <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>

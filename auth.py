@@ -65,7 +65,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return "Logged out successfully!"
