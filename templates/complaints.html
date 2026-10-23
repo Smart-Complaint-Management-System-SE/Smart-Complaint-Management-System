@@ -4,40 +4,30 @@
     <title>My Complaints</title>
 </head>
 <body>
-
     <h1>My Complaints</h1>
-
     {% if complaints %}
-
         {% for complaint in complaints %}
-
             <div>
                 <h2>{{ complaint.title }}</h2>
-
                 <p>{{ complaint.description }}</p>
-
                 <p>
-                    <strong>Status:</strong>
-                    {{ complaint.status }}
+                    <strong>Status:</strong> {{ complaint.status }}
                 </p>
+                
+                <!-- Added Timestamps Here -->
+                <p><strong>Created:</strong> {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</p>
+                <p><strong>Last Updated:</strong> {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}</p>
 
                 {% if complaint.resolution %}
                     <p>
-                        <strong>Resolution:</strong>
-                        {{ complaint.resolution }}
+                        <strong>Resolution:</strong> {{ complaint.resolution }}
                     </p>
                 {% endif %}
-
                 <hr>
             </div>
-
         {% endfor %}
-
     {% else %}
-
         <p>You have not submitted any complaints.</p>
-
     {% endif %}
-
 </body>
 </html>

@@ -4,7 +4,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
-from app import app, db, User, Complaint
+from app import app, db
+from models import User, Complaint
 from werkzeug.security import generate_password_hash
 
 
