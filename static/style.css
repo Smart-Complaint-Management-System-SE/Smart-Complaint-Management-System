@@ -23,5 +23,3 @@ select, textarea, input { width: 100%; padding: 8px; margin-top: 4px; box-sizing
 button { margin-top: 16px; }
 .box { background: #f7f8fa; padding: 12px; border-radius: 6px; }
 .error { color: #c0392b; font-weight: bold; }
-.logout-form { display: inline; }
-.logout-form button { margin-top: 0; }

@@ -1,23 +1,12 @@
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
-from models import User, Complaint, ComplaintUpdate, CATEGORIES
+from models import User, Complaint
 
 admin = Blueprint("admin", __name__)
 
 STATUSES = ["Pending", "In Progress", "Resolved"]
-
-# Next statuses an admin may choose (FR-09). Keeping the same status is
-# always allowed so that resolution remarks can still be edited.
-TRANSITIONS = {
-    "Pending": ["In Progress"],
-    "In Progress": ["Resolved"],
-    "Resolved": ["In Progress"],
-}
-
-
-def allowed_statuses(current):
-    return [current] + TRANSITIONS.get(current, [])
+CATEGORIES = ["Academic", "Infrastructure", "Hostel", "Technical", "Other"]
 
 
 def admin_only():
@@ -31,7 +20,6 @@ def admin_dashboard():
 
     status = request.args.get("status")
     category = request.args.get("category")
-    sort = request.args.get("sort", "newest")
 
     query = Complaint.query
 
@@ -41,13 +29,7 @@ def admin_dashboard():
     if category in CATEGORIES:
         query = query.filter_by(category=category)
 
-    if sort == "oldest":
-        query = query.order_by(Complaint.created_at.asc(), Complaint.id.asc())
-    else:
-        sort = "newest"
-        query = query.order_by(Complaint.created_at.desc(), Complaint.id.desc())
-
-    all_complaints = query.all()
+    all_complaints = query.order_by(Complaint.id.desc()).all()
 
     users = {
         u.id: u.name
@@ -59,16 +41,23 @@ def admin_dashboard():
         for s in STATUSES
     }
 
+    categories = db.session.query(
+        Complaint.category
+    ).distinct().all()
+
+    categories = [
+        c[0] for c in categories if c[0]
+    ]
+
     return render_template(
         "admin_dashboard.html",
         complaints=all_complaints,
         users=users,
         counts=counts,
         statuses=STATUSES,
-        categories=CATEGORIES,
+        categories=categories,
         selected=status,
-        selected_category=category,
-        sort=sort
+        selected_category=category
     )
 
 
@@ -87,33 +76,14 @@ def admin_complaint(complaint_id):
     if request.method == "POST":
         new_status = request.form.get("status", "")
         resolution = request.form.get("resolution", "").strip()
-        reason = request.form.get("reason", "").strip()
-        reopening = c.status == "Resolved" and new_status == "In Progress"
 
         if new_status not in STATUSES:
             error = "Invalid status."
 
-        elif new_status not in allowed_statuses(c.status):
-            error = f"A complaint cannot move from {c.status} to {new_status}."
-
         elif new_status == "Resolved" and not resolution:
             error = "Resolution remarks are required."
 
-        elif reopening and not reason:
-            error = "A reason is required to reopen a resolved complaint."
-
         else:
-            remarks_changed = bool(resolution) and resolution != (c.resolution or "")
-
-            if new_status != c.status or remarks_changed:
-                db.session.add(ComplaintUpdate(
-                    complaint_id=c.id,
-                    admin_id=session.get("user_id"),
-                    old_status=c.status,
-                    new_status=new_status,
-                    note=reason or ("Resolution remarks updated" if remarks_changed else None)
-                ))
-
             c.status = new_status
 
             if resolution:
@@ -123,24 +93,10 @@ def admin_complaint(complaint_id):
 
             return redirect(url_for("admin.admin_dashboard"))
 
-    history = ComplaintUpdate.query.filter_by(
-        complaint_id=c.id
-    ).order_by(
-        ComplaintUpdate.created_at.desc(),
-        ComplaintUpdate.id.desc()
-    ).all()
-
-    admins = {
-        u.id: u.name
-        for u in User.query.filter_by(role="admin").all()
-    }
-
     return render_template(
         "admin_complaint.html",
         c=c,
         owner=owner,
-        history=history,
-        admins=admins,
-        statuses=allowed_statuses(c.status),
+        statuses=STATUSES,
         error=error
     )

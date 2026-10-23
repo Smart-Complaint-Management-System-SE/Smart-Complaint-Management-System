@@ -7,23 +7,12 @@
 <body>
 <div class="container">
 
-    <div class="topbar">
-        <a href="{{ url_for('admin.admin_dashboard') }}">&larr; Back to dashboard</a>
-        {% include '_logout.html' %}
-    </div>
+    <a href="{{ url_for('admin_dashboard') }}">&larr; Back to dashboard</a>
 
     <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
     <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
-    <p><strong>Category:</strong> {{ c.category }}</p>
-    <p><strong>Submitted:</strong> {{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}
-        | <strong>Last updated:</strong> {{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</p>
     <p><strong>Current status:</strong>
         <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
-    {% if history %}
-        <p><strong>Last updated by:</strong>
-            {{ admins.get(history[0].admin_id, 'Unknown') }}
-            on {{ history[0].created_at.strftime('%d-%m-%Y %H:%M') }}</p>
-    {% endif %}
     <p><strong>Description:</strong></p>
     <div class="box">{{ c.description }}</div>
 
@@ -43,35 +32,8 @@
         <label>Resolution remarks (required when Resolved)</label>
         <textarea name="resolution" rows="4">{{ c.resolution or '' }}</textarea>
 
-        {% if c.status == 'Resolved' %}
-            <label>Reason for reopening (required to move back to In Progress)</label>
-            <textarea name="reason" rows="2">{{ request.form.get('reason', '') }}</textarea>
-        {% endif %}
-
         <button type="submit">Update Complaint</button>
     </form>
-
-    <h2>History</h2>
-    {% if history %}
-        <table>
-            <tr>
-                <th>When</th>
-                <th>Admin</th>
-                <th>Change</th>
-                <th>Note</th>
-            </tr>
-            {% for h in history %}
-            <tr>
-                <td>{{ h.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                <td>{{ admins.get(h.admin_id, 'Unknown') }}</td>
-                <td>{{ h.old_status }} &rarr; {{ h.new_status }}</td>
-                <td>{{ h.note or '' }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No changes yet.</p>
-    {% endif %}
 
 </div>
 </body>
