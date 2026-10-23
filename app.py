@@ -29,7 +29,9 @@ app.config["SESSION_COOKIE_SECURE"] = (
 )
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///complaints.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///complaints.db"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 

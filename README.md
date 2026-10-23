@@ -55,6 +55,7 @@ The app reads its settings from environment variables. It will not start without
 | `SECRET_KEY` | Yes | Signs session cookies. Use a long random value and never commit it. |
 | `FLASK_DEBUG` | No | Set to `1` to turn on debug mode for local development. Off by default. |
 | `SESSION_COOKIE_SECURE` | No | Set to `1` when the app is served over HTTPS, so session cookies are only sent over HTTPS. |
+| `DATABASE_URL` | No | Database to use. Defaults to `sqlite:///complaints.db` in the `instance/` folder. |
 
 Generate a key and start the app:
 
@@ -64,6 +65,15 @@ python3 app.py
 ```
 
 Sessions expire after 30 minutes of inactivity. All forms include a CSRF token, and a POST request without a valid token is rejected with 400 Bad Request.
+
+## Running the Tests
+
+```bash
+pip install -r requirements.txt
+python3 -m pytest
+```
+
+The tests use their own temporary database (set in `tests/conftest.py`), so they never change `instance/complaints.db`. `tests/test_app.py` covers the user side and `tests/test_admin.py` covers the admin side.
 
 ## Technology Stack
 
