@@ -7,6 +7,18 @@ admin = Blueprint("admin", __name__)
 
 STATUSES = ["Pending", "In Progress", "Resolved"]
 
+# Next statuses an admin may choose (FR-09). Keeping the same status is
+# always allowed so that resolution remarks can still be edited.
+TRANSITIONS = {
+    "Pending": ["In Progress"],
+    "In Progress": ["Resolved"],
+    "Resolved": ["In Progress"],
+}
+
+
+def allowed_statuses(current):
+    return [current] + TRANSITIONS.get(current, [])
+
 
 def admin_only():
     if session.get("role") != "admin":
@@ -67,12 +79,20 @@ def admin_complaint(complaint_id):
     if request.method == "POST":
         new_status = request.form.get("status", "")
         resolution = request.form.get("resolution", "").strip()
+        reason = request.form.get("reason", "").strip()
+        reopening = c.status == "Resolved" and new_status == "In Progress"
 
         if new_status not in STATUSES:
             error = "Invalid status."
 
+        elif new_status not in allowed_statuses(c.status):
+            error = f"A complaint cannot move from {c.status} to {new_status}."
+
         elif new_status == "Resolved" and not resolution:
             error = "Resolution remarks are required."
+
+        elif reopening and not reason:
+            error = "A reason is required to reopen a resolved complaint."
 
         else:
             c.status = new_status
@@ -88,6 +108,6 @@ def admin_complaint(complaint_id):
         "admin_complaint.html",
         c=c,
         owner=owner,
-        statuses=STATUSES,
+        statuses=allowed_statuses(c.status),
         error=error
     )

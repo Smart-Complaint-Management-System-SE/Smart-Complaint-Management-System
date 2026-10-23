@@ -32,6 +32,11 @@
         <label>Resolution remarks (required when Resolved)</label>
         <textarea name="resolution" rows="4">{{ c.resolution or '' }}</textarea>
 
+        {% if c.status == 'Resolved' %}
+            <label>Reason for reopening (required to move back to In Progress)</label>
+            <textarea name="reason" rows="2">{{ request.form.get('reason', '') }}</textarea>
+        {% endif %}
+
         <button type="submit">Update Complaint</button>
     </form>
 
