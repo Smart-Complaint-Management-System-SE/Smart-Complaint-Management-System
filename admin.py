@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
-from models import User, Complaint, CATEGORIES
+from models import User, Complaint, ComplaintUpdate, CATEGORIES
 
 admin = Blueprint("admin", __name__)
 
@@ -95,6 +95,17 @@ def admin_complaint(complaint_id):
             error = "A reason is required to reopen a resolved complaint."
 
         else:
+            remarks_changed = bool(resolution) and resolution != (c.resolution or "")
+
+            if new_status != c.status or remarks_changed:
+                db.session.add(ComplaintUpdate(
+                    complaint_id=c.id,
+                    admin_id=session.get("user_id"),
+                    old_status=c.status,
+                    new_status=new_status,
+                    note=reason or ("Resolution remarks updated" if remarks_changed else None)
+                ))
+
             c.status = new_status
 
             if resolution:
@@ -104,10 +115,24 @@ def admin_complaint(complaint_id):
 
             return redirect(url_for("admin.admin_dashboard"))
 
+    history = ComplaintUpdate.query.filter_by(
+        complaint_id=c.id
+    ).order_by(
+        ComplaintUpdate.created_at.desc(),
+        ComplaintUpdate.id.desc()
+    ).all()
+
+    admins = {
+        u.id: u.name
+        for u in User.query.filter_by(role="admin").all()
+    }
+
     return render_template(
         "admin_complaint.html",
         c=c,
         owner=owner,
+        history=history,
+        admins=admins,
         statuses=allowed_statuses(c.status),
         error=error
     )
