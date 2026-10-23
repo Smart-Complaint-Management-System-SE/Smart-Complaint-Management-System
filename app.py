@@ -5,6 +5,7 @@ from datetime import timedelta
 from flask import Flask, render_template, request, session, abort
 
 from extensions import db
+from models import normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
@@ -82,6 +83,7 @@ def internal_server_error(e):
 
 with app.app_context():
     db.create_all()
+    normalize_categories()
 
 
 if __name__ == "__main__":

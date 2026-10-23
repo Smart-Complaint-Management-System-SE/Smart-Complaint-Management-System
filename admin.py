@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
-from models import User, Complaint
+from models import User, Complaint, CATEGORIES
 
 admin = Blueprint("admin", __name__)
 
 STATUSES = ["Pending", "In Progress", "Resolved"]
-CATEGORIES = ["Academic", "Infrastructure", "Hostel", "Technical", "Other"]
 
 
 def admin_only():
@@ -41,21 +40,13 @@ def admin_dashboard():
         for s in STATUSES
     }
 
-    categories = db.session.query(
-        Complaint.category
-    ).distinct().all()
-
-    categories = [
-        c[0] for c in categories if c[0]
-    ]
-
     return render_template(
         "admin_dashboard.html",
         complaints=all_complaints,
         users=users,
         counts=counts,
         statuses=STATUSES,
-        categories=categories,
+        categories=CATEGORIES,
         selected=status,
         selected_category=category
     )

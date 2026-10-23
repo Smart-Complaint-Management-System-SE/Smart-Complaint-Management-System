@@ -1,6 +1,8 @@
 from extensions import db
 from datetime import datetime
 
+CATEGORIES = ["Academic", "Infrastructure", "Hostel", "Technical", "Other"]
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,3 +31,13 @@ class Complaint(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+
+
+def normalize_categories():
+    """Map old free-text categories onto CATEGORIES, falling back to Other."""
+    lookup = {c.lower(): c for c in CATEGORIES}
+
+    for c in Complaint.query.filter(Complaint.category.notin_(CATEGORIES)).all():
+        c.category = lookup.get((c.category or "").strip().lower(), "Other")
+
+    db.session.commit()
