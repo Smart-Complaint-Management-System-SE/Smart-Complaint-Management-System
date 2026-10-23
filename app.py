@@ -61,7 +61,7 @@ def check_csrf():
 
 @app.route("/")
 def home():
-    return "Smart Complaint Management System"
+    return render_template("home.html", logged_in="user_id" in session)
 
 
 @app.errorhandler(403)

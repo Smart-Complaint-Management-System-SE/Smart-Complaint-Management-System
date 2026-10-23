@@ -56,14 +56,14 @@ def login():
             if user.role == "admin":
                 return redirect(url_for("admin.admin_dashboard"))
 
-            return f"Welcome, {user.name}!"
+            return redirect(url_for("complaints.dashboard"))
 
         error = "Invalid email or password."
 
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["GET", "POST"])
 def logout():
     session.clear()
     return "Logged out successfully!"
