@@ -5,6 +5,7 @@ from datetime import timedelta
 from flask import Flask, render_template, request, session, abort
 
 from extensions import db
+from models import normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
@@ -28,7 +29,9 @@ app.config["SESSION_COOKIE_SECURE"] = (
 )
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///complaints.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///complaints.db"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
@@ -82,6 +85,7 @@ def internal_server_error(e):
 
 with app.app_context():
     db.create_all()
+    normalize_categories()
 
 
 if __name__ == "__main__":

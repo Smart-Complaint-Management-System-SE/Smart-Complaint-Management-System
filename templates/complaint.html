@@ -7,6 +7,8 @@
 
     <h1>Submit a Complaint</h1>
 
+    {% include '_logout.html' %}
+
     {% if error %}
         <p style="color: red;"><strong>{{ error }}</strong></p>
     {% endif %}
@@ -26,12 +28,16 @@
 
         <label>Category:</label>
         <br>
-        <input
-            type="text"
-            name="category"
-            value="{{ request.form.get('category', '') }}"
-            required
-        >
+        <select name="category" required>
+            <option value="">Choose a category</option>
+
+            {% for category in categories %}
+                <option value="{{ category }}"
+                    {% if request.form.get('category') == category %}selected{% endif %}>
+                    {{ category }}
+                </option>
+            {% endfor %}
+        </select>
 
         <br><br>
 

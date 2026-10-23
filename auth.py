@@ -49,6 +49,8 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
+            session.clear()
+            session.permanent = True
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
@@ -63,7 +65,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return "Logged out successfully!"

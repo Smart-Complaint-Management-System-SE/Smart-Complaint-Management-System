@@ -5,6 +5,8 @@
 </head>
 <body>
     <h1>My Complaints</h1>
+
+    {% include '_logout.html' %}
     {% if complaints %}
         {% for complaint in complaints %}
             <div>
