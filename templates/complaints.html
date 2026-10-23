@@ -9,6 +9,9 @@
         {% for complaint in complaints %}
             <div>
                 <h2>{{ complaint.title }}</h2>
+                <a href="{{ url_for('complaints.complaint_detail', complaint_id=complaint.id) }}">
+    View Details
+</a>
                 <p>{{ complaint.description }}</p>
                 <p>
                     <strong>Status:</strong> {{ complaint.status }}
