@@ -1,4 +1,65 @@
-from conftest import csrf, login
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import pytest
+from app import app, db
+from models import User, Complaint
+from werkzeug.security import generate_password_hash
+
+
+@pytest.fixture
+def client(tmp_path):
+    app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        "sqlite:///" + str(tmp_path / "test.db")
+    )
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
+        user = User(
+            name="Test User",
+            email="test@example.com",
+            password=generate_password_hash("password123"),
+            role="user"
+        )
+
+        admin = User(
+            name="Admin",
+            email="admin@example.com",
+            password=generate_password_hash("admin123"),
+            role="admin"
+        )
+
+        db.session.add_all([user, admin])
+        db.session.commit()
+
+    with app.test_client() as client:
+        yield client
+
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+
+
+def csrf(client):
+    with client.session_transaction() as session:
+        session["csrf_token"] = "test-token"
+
+
+def login(client, email, password):
+    csrf(client)
+    return client.post(
+        "/login",
+        data={
+            "email": email,
+            "password": password,
+            "csrf_token": "test-token"
+        }
+    )
 
 
 def test_tc01_registration(client):

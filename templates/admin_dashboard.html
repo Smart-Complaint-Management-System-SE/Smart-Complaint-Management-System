@@ -12,7 +12,7 @@
         <h1>Admin Dashboard</h1>
         <span>
             Logged in as {{ session['user_name'] }} |
-            {% include '_logout.html' %}
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         </span>
     </div>
 
@@ -55,13 +55,6 @@
                 {% endfor %}
             </select>
 
-            <label for="sort">Sort:</label>
-
-            <select name="sort" id="sort">
-                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
-                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
-            </select>
-
             <button type="submit">Apply Filters</button>
 
             <a href="{{ url_for('admin.admin_dashboard') }}">Clear</a>
@@ -77,8 +70,6 @@
             <th>Category</th>
             <th>Submitted by</th>
             <th>Status</th>
-            <th>Submitted</th>
-            <th>Last updated</th>
             <th>Action</th>
         </tr>
 
@@ -98,10 +89,6 @@
                 </span>
             </td>
 
-            <td>{{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}</td>
-
-            <td>{{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</td>
-
             <td>
                 <a class="btn"
                    href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}">
@@ -113,7 +100,7 @@
         {% else %}
 
         <tr>
-            <td colspan="8">No complaints found.</td>
+            <td colspan="6">No complaints found.</td>
         </tr>
 
         {% endfor %}
