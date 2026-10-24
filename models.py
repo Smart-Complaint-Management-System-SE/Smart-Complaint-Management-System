@@ -29,3 +29,28 @@ class Complaint(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+
+
+class LoginAttempt(db.Model):
+    """Lock state for one normalized email address (see login_limit.py).
+
+    The row also serves as the per-email mutex for concurrent login attempts.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    last_attempt_at = db.Column(db.DateTime, nullable=False)
+    locked_until = db.Column(db.DateTime)
+
+
+class LoginAttemptEvent(db.Model):
+    """One counted login attempt, kept while it is inside the rolling window."""
+
+    __table_args__ = (
+        db.Index("ix_login_attempt_event_email_attempted_at", "email", "attempted_at"),
+        db.Index("ix_login_attempt_event_attempted_at", "attempted_at"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    attempted_at = db.Column(db.DateTime, nullable=False)
