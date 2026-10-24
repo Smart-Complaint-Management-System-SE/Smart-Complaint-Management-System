@@ -32,13 +32,19 @@ def _init_app_with_test_db(self, flask_app):
 
 
 # Both patches are undone when the block exits, so nothing leaks into other tests.
+# A DATABASE_URL (or Render flag) in the developer's shell must never select a
+# real database, or make the import fail, so those variables are cleared for the
+# import only; production behaviour in app.py is untouched.
 with mock.patch.dict(
     os.environ, {"SECRET_KEY": os.environ.get("SECRET_KEY") or "test-only-key"}
 ):
+    for _name in ("DATABASE_URL", "RENDER", "REQUIRE_DATABASE_URL"):
+        os.environ.pop(_name, None)
+
     with mock.patch.object(
         flask_sqlalchemy.SQLAlchemy, "init_app", _init_app_with_test_db
     ):
-        from app import app, db
+        from app import app, db, get_database_uri, SQLITE_URI
 
 from models import User
 from werkzeug.security import generate_password_hash
