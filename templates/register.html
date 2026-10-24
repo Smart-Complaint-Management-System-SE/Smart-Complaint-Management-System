@@ -2,26 +2,29 @@
 <html>
 <head>
     <title>Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<div class="container">
 
     <h1>Smart Complaint Management System</h1>
 
     <h2>Register</h2>
 
-    {% if error %}
-        <p style="color: red;"><strong>{{ error }}</strong></p>
-    {% endif %}
+    {% for message in errors %}
+        <p class="error">{{ message }}</p>
+    {% endfor %}
     
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <label>Name:</label>
-        <input type="text" name="name" required>
+        <input type="text" name="name" value="{{ name }}" required>
         <br><br>
 
         <label>Email:</label>
-        <input type="email" name="email" required>
+        <input type="email" name="email" value="{{ email }}" required>
         <br><br>
 
         <label>Password:</label>
@@ -32,5 +35,6 @@
 
     </form>
 
+</div>
 </body>
 </html>
