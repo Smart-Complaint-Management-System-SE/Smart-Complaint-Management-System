@@ -26,11 +26,17 @@ def _init_app_with_test_db(self, flask_app):
     _real_init_app(self, flask_app)
 
 
-# The patch is undone when the block exits, so it cannot leak into other tests.
-with mock.patch.object(
-    flask_sqlalchemy.SQLAlchemy, "init_app", _init_app_with_test_db
-):
-    from app import app, db
+# Environment changes are undone when the block exits, so nothing leaks into
+# other tests; a DATABASE_URL (or Render flag) in the developer's shell must
+# never select a real database.
+with mock.patch.dict(os.environ):
+    for _name in ("DATABASE_URL", "RENDER", "REQUIRE_DATABASE_URL"):
+        os.environ.pop(_name, None)
+
+    with mock.patch.object(
+        flask_sqlalchemy.SQLAlchemy, "init_app", _init_app_with_test_db
+    ):
+        from app import app, db, get_database_uri, SQLITE_URI
 
 from models import User, Complaint
 from werkzeug.security import generate_password_hash
@@ -420,6 +426,46 @@ def test_register_rejects_duplicate_of_legacy_mixed_case_email(client):
 
     assert b"Email already registered" in response.data
     assert user_count() == 3
+
+
+# --- Database configuration (Issue #73) ---
+
+def test_db_config_falls_back_to_sqlite_without_database_url():
+    assert get_database_uri({}) == SQLITE_URI
+    assert get_database_uri({"DATABASE_URL": "   "}) == SQLITE_URI
+
+
+def test_db_config_normalizes_legacy_postgres_scheme():
+    url = get_database_uri({"DATABASE_URL": "postgres://u:p@host:5432/db"})
+
+    assert url == "postgresql://u:p@host:5432/db"
+
+
+def test_db_config_keeps_postgresql_url_unchanged():
+    raw = "postgresql://u:p@host:5432/db?sslmode=require"
+
+    assert get_database_uri({"DATABASE_URL": raw}) == raw
+
+
+def test_db_config_rejects_non_postgres_url():
+    with pytest.raises(RuntimeError):
+        get_database_uri({"DATABASE_URL": "mysql://u:p@host/db"})
+
+
+def test_db_config_missing_url_is_an_error_on_render():
+    with pytest.raises(RuntimeError):
+        get_database_uri({"RENDER": "true"})
+
+
+def test_db_config_missing_url_is_an_error_when_required():
+    with pytest.raises(RuntimeError):
+        get_database_uri({"REQUIRE_DATABASE_URL": "1"})
+
+
+def test_db_config_url_wins_on_render():
+    url = get_database_uri({"RENDER": "true", "DATABASE_URL": "postgres://h/db"})
+
+    assert url == "postgresql://h/db"
 
 
 def test_fixture_uses_temporary_database_not_local_db(client):
