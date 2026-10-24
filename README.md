@@ -45,6 +45,8 @@ The app reads its settings from environment variables. It will not start without
 | `SECRET_KEY` | Yes | Signs session cookies. Use a long random value and never commit it. |
 | `FLASK_DEBUG` | No | Set to `1` to turn on debug mode for local development. Off by default. |
 | `SESSION_COOKIE_SECURE` | No | Set to `1` when the app is served over HTTPS, so session cookies are only sent over HTTPS. |
+| `DATABASE_URL` | In production | PostgreSQL connection URL (`postgres://` or `postgresql://`). Never commit it. If unset, the app uses local SQLite. |
+| `REQUIRE_DATABASE_URL` | No | Set to `1` to refuse to start without `DATABASE_URL`. |
 
 Generate a key and start the app:
 
@@ -54,6 +56,10 @@ python3 app.py
 ```
 
 Sessions expire after 30 minutes of inactivity. All forms include a CSRF token, and a POST request without a valid token is rejected with 400 Bad Request.
+
+### Database and persistence
+
+Locally the app uses SQLite (`instance/complaints.db`) when `DATABASE_URL` is not set. Render's web service disk is temporary, so SQLite data there is lost on restart or redeploy. To keep data, set `DATABASE_URL` to an external PostgreSQL database in the Render environment settings. The app refuses to start on Render (or when `REQUIRE_DATABASE_URL=1`) without it. Tables are created if missing; existing data is never dropped.
 
 ## Technology Stack
 
