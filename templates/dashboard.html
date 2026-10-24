@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+
+    {% include '_nav.html' %}
+
+    <h1>Welcome, {{ name }}</h1>
+
+    <div class="cards">
+        {% for status, total in counts.items() %}
+            <div class="card">
+                <div class="num">{{ total }}</div>
+                <div>{{ status }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <a class="btn" href="{{ url_for('complaints.complaint') }}">Submit complaint</a>
+    <a class="btn" href="{{ url_for('complaints.complaints') }}">My complaints</a>
+
+</div>
+</body>
+</html>

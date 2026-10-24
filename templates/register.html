@@ -12,19 +12,19 @@
 
     <h2>Register</h2>
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
+    {% for message in errors %}
+        <p class="error">{{ message }}</p>
+    {% endfor %}
     
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <label>Name:</label>
-        <input type="text" name="name" required>
+        <input type="text" name="name" value="{{ name }}" required>
         <br><br>
 
         <label>Email:</label>
-        <input type="email" name="email" required>
+        <input type="email" name="email" value="{{ email }}" required>
         <br><br>
 
         <label>Password:</label>

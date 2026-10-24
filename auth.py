@@ -1,7 +1,10 @@
+import re
+
 from flask import (
     Blueprint, make_response, render_template, request, session, redirect,
     url_for
 )
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import login_limit
@@ -10,47 +13,84 @@ from models import User
 
 auth = Blueprint("auth", __name__)
 
+NAME_MIN_LENGTH = 2
+NAME_MAX_LENGTH = 100
+EMAIL_MAX_LENGTH = 120
+PASSWORD_MIN_LENGTH = 8
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def find_user_by_email(email):
+    """Look a user up ignoring case, so accounts stored before emails were
+    lowercased can still be found. `email` must already be lowercase."""
+    return User.query.filter(func.lower(User.email) == email).first()
+
 
 @auth.route("/register", methods=["GET", "POST"])
 def register():
-    error = None
+    errors = []
+    name = ""
+    entered_email = ""
 
     if request.method == "POST":
-        name = request.form["name"].strip()
-        email = request.form["email"].strip()
-        password = request.form["password"]
+        name = request.form.get("name", "").strip()
+        entered_email = request.form.get("email", "").strip()
+        email = entered_email.lower()
+        password = request.form.get("password", "")
 
-        if not name or not email or not password:
-            error = "Name, email, and password are required."
-        else:
-            existing_user = User.query.filter_by(email=email).first()
+        if not NAME_MIN_LENGTH <= len(name) <= NAME_MAX_LENGTH:
+            errors.append(
+                f"Name must be {NAME_MIN_LENGTH} to {NAME_MAX_LENGTH} "
+                "characters long."
+            )
 
-            if existing_user:
-                error = "Email already registered. Please use another email."
-            else:
-                user = User(
-                    name=name,
-                    email=email,
-                    password=generate_password_hash(password)
-                )
+        if len(email) > EMAIL_MAX_LENGTH:
+            errors.append(
+                f"Email must be {EMAIL_MAX_LENGTH} characters or fewer."
+            )
+        elif not EMAIL_PATTERN.match(email):
+            errors.append("Enter a valid email address, such as name@example.com.")
+        elif find_user_by_email(email):
+            errors.append("Email already registered. Please use another email.")
 
-                db.session.add(user)
-                db.session.commit()
+        if len(password) < PASSWORD_MIN_LENGTH:
+            errors.append(
+                f"Password must be at least {PASSWORD_MIN_LENGTH} characters long."
+            )
 
-                return "Registration successful!"
+        if not errors:
+            user = User(
+                name=name,
+                email=email,
+                password=generate_password_hash(password)
+            )
 
-    return render_template("register.html", error=error)
+            db.session.add(user)
+            db.session.commit()
+
+            return "Registration successful!"
+
+    return render_template(
+        "register.html", errors=errors, name=name, email=entered_email
+    )
 
 
-def lookup_account(email):
+def canonical_email(typed_email):
+    """The form an address is compared in: stripped and lowercased (PR #86)."""
+    return typed_email.strip().lower()
+
+
+def lookup_account(typed_email):
     """Find the account a login attempt is for.
 
-    An account is identified by its exact stored email, as registration and
-    login have always done. If that rule ever becomes case-insensitive, the rate
-    limiter needs no change: it keys on the account this function returns, never
-    on the typed text.
+    The lookup is case-insensitive (find_user_by_email on the canonical form), so
+    accounts stored before emails were lowercased can still sign in. The rate
+    limiter does not depend on how the account is found: it keys on the stored
+    email of whatever account this returns, and on the canonical form of the
+    typed address when there is none.
     """
-    return User.query.filter_by(email=email).first()
+    return find_user_by_email(canonical_email(typed_email))
 
 
 def locked_out(retry_after):
@@ -82,10 +122,13 @@ def login():
     error = None
 
     if request.method == "POST":
-        email = request.form.get("email", "")
+        typed_email = request.form.get("email", "")
         password = request.form.get("password", "")
 
-        user = lookup_account(email)
+        # The canonical form is what PR #86 looks accounts up by; it is also
+        # what the limiter is given for an address that matches no account.
+        email = canonical_email(typed_email)
+        user = lookup_account(typed_email)
 
         # Failures are counted per account: the key comes from the account that
         # was found (or from the typed text when there is none; malformed input
@@ -116,7 +159,7 @@ def login():
             if user.role == "admin":
                 return redirect(url_for("admin.admin_dashboard"))
 
-            return f"Welcome, {user.name}!"
+            return redirect(url_for("complaints.dashboard"))
 
         if reserved:
             retry_after = login_limit.record_failure(key)
@@ -129,7 +172,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["GET", "POST"])
 def logout():
     session.clear()
     return "Logged out successfully!"

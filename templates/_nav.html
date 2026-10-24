@@ -1,0 +1,6 @@
+<nav>
+    <a href="{{ url_for('complaints.dashboard') }}">Dashboard</a> |
+    <a href="{{ url_for('complaints.complaint') }}">Submit complaint</a> |
+    <a href="{{ url_for('complaints.complaints') }}">My complaints</a> |
+    {% include '_logout.html' %}
+</nav>

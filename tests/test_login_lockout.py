@@ -206,8 +206,9 @@ def test_successful_login_resets_the_counter(new_client, clock):
 
     response = attempt(client, USER, USER_PASSWORD)  # the fifth attempt succeeds
 
-    assert response.status_code == 200
-    assert b"Welcome, Test User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert failures(USER) == 0
     assert locked_until(USER) is None
 
@@ -241,8 +242,9 @@ def test_lockout_expires_and_the_next_attempt_is_allowed(new_client, clock):
     clock.advance(seconds=2)
     response = attempt(client, USER, USER_PASSWORD)
 
-    assert response.status_code == 200
-    assert b"Welcome, Test User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert failures(USER) == 0
 
 
@@ -358,8 +360,9 @@ def test_different_emails_have_independent_counters(new_client, clock):
     assert attempt(client, "someone@example.com", WRONG).status_code == 429
 
     response = attempt(client, USER, USER_PASSWORD)
-    assert response.status_code == 200
-    assert b"Welcome, Test User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
 
     fail(client, ADMIN, 2)
     assert failures(ADMIN) == 2
@@ -386,8 +389,9 @@ def test_valid_user_login_still_works(new_client, clock):
 
     response = attempt(client, USER, USER_PASSWORD)
 
-    assert response.status_code == 200
-    assert b"Welcome, Test User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert logged_in(client)
     with client.session_transaction() as session:
         assert session["role"] == "user"
@@ -495,7 +499,10 @@ def test_distinct_malformed_inputs_have_independent_counters(new_client, clock):
     assert attempt(client, first, WRONG).status_code == 429
     assert attempt(client, second, WRONG).status_code == 200
     assert failures(login_limit.normalize_email(second)) == 1
-    assert attempt(client, USER, USER_PASSWORD).status_code == 200  # real accounts unaffected
+    unaffected = attempt(client, USER, USER_PASSWORD)  # real accounts unaffected
+    assert unaffected.status_code == 302
+    assert unaffected.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
 
 
 def test_normalize_email_handles_odd_input_and_keeps_plain_keys_plain():
@@ -698,8 +705,27 @@ def add_user(email, password, name="Variant User"):
         db.session.commit()
 
 
+def _exact_lookup(typed_email):
+    """The rule the limiter was first written against: typed text equals the stored email."""
+    return User.query.filter_by(email=typed_email).first()
+
+
+@pytest.fixture
+def exact_lookup(monkeypatch):
+    """Swap login's lookup for an exact-match one.
+
+    Since PR #86 the login form resolves addresses case-insensitively, so two
+    accounts whose emails differ only by case (possible only for rows stored
+    before emails were lowercased) cannot be told apart through it. The limiter
+    keys on whichever account the lookup returns, so the tests that use this
+    fixture keep exercising it against stored address pairs that an exact lookup
+    does tell apart. The tests under "the shipped lookup" cover the real one.
+    """
+    monkeypatch.setattr(auth_module, "lookup_account", _exact_lookup)
+
+
 def test_success_on_a_case_variant_account_does_not_reset_the_shared_counter(
-    new_client, clock
+    new_client, clock, exact_lookup
 ):
     add_user("Mixed@Example.com", "alpha-pass-1")
     add_user("mixed@example.com", "bravo-pass-2")
@@ -711,8 +737,9 @@ def test_success_on_a_case_variant_account_does_not_reset_the_shared_counter(
 
     response = attempt(client, "mixed@example.com", "bravo-pass-2")  # the other account
 
-    assert response.status_code == 200
-    assert b"Welcome, Variant User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures(SHARED_KEY) == 4  # failures kept; the success is not counted
     assert locked_until(SHARED_KEY) is None
 
@@ -723,7 +750,9 @@ def test_success_on_a_case_variant_account_does_not_reset_the_shared_counter(
     assert locked_until(SHARED_KEY) == START + timedelta(minutes=15)
 
 
-def test_alternating_with_a_case_variant_login_gives_no_extra_guesses(new_client, clock):
+def test_alternating_with_a_case_variant_login_gives_no_extra_guesses(
+    new_client, clock, exact_lookup
+):
     add_user("Mixed@Example.com", "alpha-pass-1")
     add_user("mixed@example.com", "bravo-pass-2")
     client = new_client()
@@ -746,7 +775,9 @@ def test_success_with_exactly_one_matching_account_still_resets_the_counter(
 
     response = attempt(client, USER, USER_PASSWORD)
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert failures(USER) == 0
 
 
@@ -761,8 +792,9 @@ def test_failed_duplicate_account_check_keeps_the_counter(new_client, clock, mon
 
     response = attempt(client, USER, USER_PASSWORD)
 
-    assert response.status_code == 200  # valid credentials still log in
-    assert b"Welcome, Test User!" in response.data
+    assert response.status_code == 302  # valid credentials still log in
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert failures(USER) == 3  # not cleared, and the success is not counted
 
 
@@ -781,8 +813,9 @@ def test_account_with_an_overlong_email_is_throttled_and_still_resets_on_success
 
     response = attempt(client, long_email, "long-pass-1")
 
-    assert response.status_code == 200
-    assert b"Welcome, Variant User!" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures(key) == 0
     assert fail(client, long_email, 5).status_code == 429
 
@@ -801,7 +834,9 @@ def test_malformed_input_key_cannot_collide_with_a_real_account_key(new_client, 
 
     response = attempt(client, victim_key, "attacker-pass-1")  # the attacker's own login
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures(victim_key) == 4  # the victim's failures are untouched
     assert attempt(client, victim_email, WRONG).status_code == 429
 
@@ -823,7 +858,7 @@ def test_unicode_case_variants_never_share_a_counter_key():
     ("bok@x.com", "bo\u212a@x.com"),
 ])
 def test_success_on_a_unicode_variant_cannot_reset_the_other_accounts_failures(
-    new_client, clock, victim, other
+    new_client, clock, exact_lookup, victim, other
 ):
     add_user(victim, "victim-pass-1")
     add_user(other, "other-pass-2")
@@ -835,12 +870,14 @@ def test_success_on_a_unicode_variant_cannot_reset_the_other_accounts_failures(
 
     response = attempt(client, other, "other-pass-2")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures(victim_key) == 4
     assert attempt(client, victim, WRONG).status_code == 429
 
 
-def test_success_on_a_non_ascii_email_keeps_its_own_failures(new_client, clock):
+def test_success_on_a_non_ascii_email_keeps_its_own_failures(new_client, clock, exact_lookup):
     """Cannot be verified against the database, so the failures are kept (safe side)."""
     add_user("\u00c4BC@x.com", "umlaut-pass-1")
     client = new_client()
@@ -849,11 +886,15 @@ def test_success_on_a_non_ascii_email_keeps_its_own_failures(new_client, clock):
     fail(client, "\u00c4BC@x.com", 3)
     response = attempt(client, "\u00c4BC@x.com", "umlaut-pass-1")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures(key) == 3  # not cleared; the successful attempt itself is given back
 
 
-def test_account_stored_with_surrounding_spaces_cannot_reset_a_shared_key(new_client, clock):
+def test_account_stored_with_surrounding_spaces_cannot_reset_a_shared_key(
+    new_client, clock, exact_lookup
+):
     add_user("pad@x.com", "plain-pass-1")
     add_user(" pad@x.com", "spaced-pass-2")  # inserted directly; the app would have trimmed it
     client = new_client()
@@ -862,7 +903,9 @@ def test_account_stored_with_surrounding_spaces_cannot_reset_a_shared_key(new_cl
 
     response = attempt(client, " pad@x.com", "spaced-pass-2")
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
     assert failures("pad@x.com") == 4
 
 
@@ -995,13 +1038,17 @@ def test_success_through_a_variant_resets_only_that_accounts_counter(
 
     response = attempt(client, "Test@Example.com", USER_PASSWORD)  # the owner logs in
 
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Test User" in client.get("/dashboard").data
     assert failures(USER) == 0
     assert failures(ADMIN) == 2  # another account's failures are untouched
     assert state_count() == 2
 
 
-def test_variants_that_do_not_resolve_cannot_reset_the_accounts_counter(new_client, clock):
+def test_variants_that_do_not_resolve_cannot_reset_the_accounts_counter(
+    new_client, clock, exact_lookup
+):
     """With the exact lookup in force, a variant is an unknown email: it can only add failures."""
     client = new_client()
     fail(client, USER, 3)
@@ -1139,6 +1186,54 @@ def test_refused_attempts_never_reach_password_verification(new_client, clock, m
 
     assert len(verified) == 5  # the refused attempts were never verified
     assert not logged_in(client)
+
+
+# the shipped lookup (PR #86): case-insensitive, canonical input ------------------
+
+def test_legacy_case_pair_shares_one_counter_and_a_success_does_not_clear_it(new_client, clock):
+    add_user("Mixed@Example.com", "alpha-pass-1")
+    add_user("mixed@example.com", "bravo-pass-2")
+    with app.app_context():  # the lookup returns one of the two rows for any spelling
+        resolved = auth_module.find_user_by_email("mixed@example.com").email
+    password = {"Mixed@Example.com": "alpha-pass-1", "mixed@example.com": "bravo-pass-2"}[resolved]
+    client = new_client()
+
+    for spelling in ["Mixed@Example.com", "MIXED@EXAMPLE.COM", " mixed@example.com ", "mIxEd@example.com"]:
+        attempt(client, spelling, WRONG)
+    assert failures(SHARED_KEY) == 4
+    assert state_count() == 1  # every spelling charged the same counter
+
+    response = attempt(client, "MIXED@example.com", password)  # the account that can log in
+
+    assert response.status_code == 302
+    assert response.location.endswith("/dashboard")
+    assert b"Welcome, Variant User" in client.get("/dashboard").data
+    assert failures(SHARED_KEY) == 4  # two accounts share the key: the failures are kept
+    assert locked_until(SHARED_KEY) is None
+
+    last = attempt(client, "mixed@example.com", WRONG)
+
+    assert last.status_code == 429
+    assert locked_until(SHARED_KEY) == START + timedelta(minutes=15)
+
+
+def test_non_ascii_legacy_account_cannot_be_used_to_get_extra_guesses(new_client, clock):
+    """SQLite's lower() leaves "Ä" alone, so this stored row never matches the lowered input."""
+    add_user("\u00c4BC@x.com", "umlaut-pass-1")
+    client = new_client()
+    key = login_limit.normalize_email("\u00e4bc@x.com")
+
+    for spelling in ["\u00c4BC@x.com", "\u00e4bc@x.com", "\u00c4bc@X.com", "\u00e4BC@x.COM"]:
+        assert attempt(client, spelling, WRONG).status_code == 200
+
+    assert failures(key) == 4  # one counter for every spelling
+    assert state_count() == 1
+
+    locking = attempt(client, "\u00c4BC@x.com", "umlaut-pass-1")  # the fifth attempt
+
+    assert locking.status_code == 429
+    assert not logged_in(client)
+    assert attempt(client, "\u00e4bc@x.com", "umlaut-pass-1").status_code == 429
 
 
 # isolation ----------------------------------------------------------------

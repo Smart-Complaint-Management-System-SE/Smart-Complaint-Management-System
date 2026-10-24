@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Complaint Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+
+    <h1>Smart Complaint Management System</h1>
+    <p>Submit complaints and track their progress.</p>
+
+    {% if logged_in %}
+        <a class="btn" href="{{ url_for('complaints.dashboard') }}">Dashboard</a>
+    {% else %}
+        <a class="btn" href="{{ url_for('auth.login') }}">Login</a>
+        <a class="btn" href="{{ url_for('auth.register') }}">Register</a>
+    {% endif %}
+
+</div>
+</body>
+</html>
