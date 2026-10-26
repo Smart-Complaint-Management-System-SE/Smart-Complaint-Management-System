@@ -44,24 +44,24 @@ This guide describes how the application works today. It covers normal user acco
 
 Start the application as described in [Configuration](#configuration) and open the address that Flask prints in the terminal. The usual local default is `http://127.0.0.1:5000`; that address was not tested while this README was written.
 
-The user pages do not link to each other yet, and there is no user dashboard. Type each page's path after the address in your browser's address bar, for example `http://127.0.0.1:5000/register` if the usual default address is used. The home page (`/`) currently shows only the text "Smart Complaint Management System".
+The home page (`/`) has **Login** and **Register** buttons. Once you are logged in, every user page has a navigation bar with **Dashboard**, **Submit complaint**, **My complaints** and **Logout**.
 
 ### 1. Register
 
 Open `/register` and fill in **Name**, **Email** and **Password**. All three are required.
 
-- If a field is left empty, the page shows "Name, email, and password are required." (Your browser may also stop you before the form is sent.)
+- The name must be 2 to 100 characters, the email must be a valid address, and the password must be at least 8 characters. Each problem is shown on the form, and your name and email are kept.
 - If the email is already registered, the page shows "Email already registered. Please use another email."
-- On success the page shows the plain text "Registration successful!". You are not logged in automatically, so go on to the login page.
+- On success you are taken to the login page with the message "Registration successful. Please log in." You are not logged in automatically.
 
-Email addresses are matched exactly as typed, including capital letters. Use the same capitalisation when you log in.
+Email addresses are stored in lowercase, so capital letters don't matter when you log in.
 
 ### 2. Log in
 
 Open `/login` and enter your **Email** and **Password**.
 
 - A wrong email or password shows "Invalid email or password."
-- On success a normal user sees only the plain text "Welcome, *your name*!". There is no redirect and no dashboard, so type the address of the next page yourself.
+- On success a normal user is taken to the **Dashboard**, which shows how many of their complaints are Pending, In Progress and Resolved.
 - Administrator accounts are sent to the admin dashboard at `/admin` instead.
 
 ### 3. Submit a complaint
@@ -69,7 +69,7 @@ Open `/login` and enter your **Email** and **Password**.
 Open `/complaint` while logged in. If you are not logged in you are sent to the login page. Fill in **Complaint Title**, **Category** and **Description**. All three are required.
 
 - If a field is empty, the form is shown again with your entries kept and the message "Title, description, and category are required."
-- On success the page shows the plain text "Complaint submitted successfully!". A new complaint starts with the status **Pending**.
+- On success you are taken to **My complaints** with the message "Complaint submitted successfully." A new complaint starts with the status **Pending**.
 
 **Choosing a category:** the category is free text and is not checked against a fixed list, but the field must not be empty. Type any category name; the application does not offer a list.
 
@@ -90,7 +90,7 @@ A resolution appears under the complaint, labelled **Resolution**, once an admin
 
 ### 6. Log out
 
-Open `/logout`. It ends your session and shows "Logged out successfully!".
+Click **Logout** in the navigation bar. It ends your session and takes you to the login page with the message "You have been logged out."
 
 ## Configuration
 

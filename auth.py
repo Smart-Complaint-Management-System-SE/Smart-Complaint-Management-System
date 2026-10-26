@@ -1,8 +1,8 @@
 import re
 
 from flask import (
-    Blueprint, make_response, render_template, request, session, redirect,
-    url_for
+    Blueprint, flash, make_response, render_template, request, session,
+    redirect, url_for
 )
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -69,7 +69,8 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-            return "Registration successful!"
+            flash("Registration successful. Please log in.")
+            return redirect(url_for("auth.login"))
 
     return render_template(
         "register.html", errors=errors, name=name, email=entered_email
@@ -175,4 +176,5 @@ def login():
 @auth.route("/logout", methods=["GET", "POST"])
 def logout():
     session.clear()
-    return "Logged out successfully!"
+    flash("You have been logged out.")
+    return redirect(url_for("auth.login"))

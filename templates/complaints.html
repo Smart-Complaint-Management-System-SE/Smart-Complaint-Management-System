@@ -9,6 +9,7 @@
 <div class="container">
     {% include '_nav.html' %}
     <h1>My Complaints</h1>
+    {% include '_messages.html' %}
     {% if complaints %}
         {% for complaint in complaints %}
             <div>

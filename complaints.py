@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for
+from flask import Blueprint, flash, render_template, request, session, redirect, url_for
 
 from sqlalchemy import func
 
@@ -34,7 +34,8 @@ def complaint():
             db.session.add(new_complaint)
             db.session.commit()
 
-            return "Complaint submitted successfully!"
+            flash("Complaint submitted successfully.")
+            return redirect(url_for("complaints.complaints"))
 
     return render_template("complaint.html", error=error)
 
