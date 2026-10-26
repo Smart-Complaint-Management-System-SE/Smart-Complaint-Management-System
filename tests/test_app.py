@@ -1,69 +1,22 @@
-import atexit
 import re
-import shutil
-import sys
 import os
-import tempfile
-from unittest import mock
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import flask_sqlalchemy
 import pytest
 
-# app.py binds its SQLAlchemy engine to SQLALCHEMY_DATABASE_URI while it is
-# imported (db.init_app) and creates tables straight away. Changing the config
-# afterwards has no effect, so the test database is injected before the first
-# engine exists, and only for the duration of the import.
-_TEST_DB_DIR = tempfile.mkdtemp(prefix="scms-tests-")
-_TEST_DB_PATH = os.path.join(_TEST_DB_DIR, "test.db")
-TEST_DB_URI = "sqlite:///" + _TEST_DB_PATH.replace("\\", "/")
-
-_real_init_app = flask_sqlalchemy.SQLAlchemy.init_app
-
-
-def _init_app_with_test_db(self, flask_app):
-    flask_app.config["SQLALCHEMY_DATABASE_URI"] = TEST_DB_URI
-    _real_init_app(self, flask_app)
-
-
-# Environment changes are undone when the block exits, so nothing leaks into
-# other tests; a DATABASE_URL (or Render flag) in the developer's shell must
-# never select a real database.
-with mock.patch.dict(os.environ):
-    for _name in ("DATABASE_URL", "RENDER", "REQUIRE_DATABASE_URL"):
-        os.environ.pop(_name, None)
-
-    with mock.patch.object(
-        flask_sqlalchemy.SQLAlchemy, "init_app", _init_app_with_test_db
-    ):
-        from app import app, db, get_database_uri, SQLITE_URI
-
+# The temporary database, the import ordering, the environment clearing and the
+# engine-binding guard all live in tests/conftest.py (pytest imports it before
+# this module, so `app` is already bound to the throwaway database).
+from conftest import (
+    SQLITE_URI,
+    TEST_DB_PATH,
+    TEST_DB_URI,
+    app,
+    assert_test_database,
+    db,
+    generate_password_hash,
+    get_database_uri,
+)
 from models import User, Complaint
-from werkzeug.security import generate_password_hash
-
-
-def _assert_test_database():
-    """Abort unless the engine is bound to this run's temporary database."""
-    bound = os.path.abspath(db.engine.url.database or "")
-
-    assert bound == os.path.abspath(_TEST_DB_PATH), (
-        "Refusing to run: the engine is not bound to the temporary test "
-        "database (" + bound + ")."
-    )
-
-
-with app.app_context():
-    _assert_test_database()
-
-
-@atexit.register
-def _remove_test_db():
-    try:
-        with app.app_context():
-            db.engine.dispose()
-    finally:
-        shutil.rmtree(_TEST_DB_DIR, ignore_errors=True)
 
 
 @pytest.fixture
@@ -71,7 +24,7 @@ def client():
     app.config["TESTING"] = True
 
     with app.app_context():
-        _assert_test_database()
+        assert_test_database()
         db.drop_all()
         db.create_all()
 
@@ -97,7 +50,7 @@ def client():
 
     with app.app_context():
         db.session.remove()
-        _assert_test_database()
+        assert_test_database()
         db.drop_all()
 
 
@@ -663,5 +616,5 @@ def test_fixture_uses_temporary_database_not_local_db(client):
         bound = os.path.abspath(db.engine.url.database)
 
     assert bound != local_db
-    assert bound == os.path.abspath(_TEST_DB_PATH)
+    assert bound == os.path.abspath(TEST_DB_PATH)
     assert app.config["SQLALCHEMY_DATABASE_URI"] == TEST_DB_URI
