@@ -7,7 +7,7 @@
 <body>
 <div class="container">
 
-    <a href="{{ url_for('admin_dashboard') }}">&larr; Back to dashboard</a>
+    <a href="{{ url_for('admin.admin_dashboard') }}">&larr; Back to dashboard</a>
 
     <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
     <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
