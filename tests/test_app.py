@@ -203,6 +203,38 @@ def test_tc10_admin_can_view_dashboard(client):
     assert b"Admin Dashboard" in response.data
 
 
+def test_admin_can_open_and_update_complaint(client):
+    with app.app_context():
+        owner = User.query.filter_by(email="test@example.com").first()
+        complaint = Complaint(
+            title="Broken fan",
+            description="Fan in room 12 does not work",
+            category="Hostel",
+            user_id=owner.id
+        )
+        db.session.add(complaint)
+        db.session.commit()
+        complaint_id = complaint.id
+
+    login(client, "admin@example.com", "admin123")
+
+    response = client.get(f"/admin/complaint/{complaint_id}")
+
+    assert response.status_code == 200
+    assert b"Broken fan" in response.data
+    assert b"Back to dashboard" in response.data
+
+    csrf(client)
+    response = client.post(
+        f"/admin/complaint/{complaint_id}",
+        data={"status": "In Progress", "csrf_token": "test-token"}
+    )
+
+    assert response.status_code == 302
+    with app.app_context():
+        assert db.session.get(Complaint, complaint_id).status == "In Progress"
+
+
 # --- Home page, navigation and user dashboard (Issue #66) ---
 
 def add_complaint(email, title, status):
