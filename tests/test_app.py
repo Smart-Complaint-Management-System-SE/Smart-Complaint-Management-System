@@ -84,8 +84,12 @@ def test_tc01_registration(client):
         }
     )
 
-    assert response.status_code == 200
-    assert b"Registration successful" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/login")
+
+    login_page = client.get("/login")
+
+    assert b"Registration successful. Please log in." in login_page.data
 
 
 def test_tc02_duplicate_registration(client):
@@ -137,7 +141,13 @@ def test_tc05_complaint_submission(client):
         }
     )
 
-    assert b"Complaint submitted successfully" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/complaints")
+
+    complaints_page = client.get("/complaints")
+
+    assert b"Complaint submitted successfully." in complaints_page.data
+    assert b"Test Complaint" in complaints_page.data
 
 
 def test_tc06_empty_complaint_rejected(client):
@@ -371,7 +381,9 @@ def test_logout_via_post_clears_session(client):
 
     response = client.post("/logout", data={"csrf_token": "test-token"})
 
-    assert b"Logged out successfully" in response.data
+    assert response.status_code == 302
+    assert response.location.endswith("/login")
+    assert b"You have been logged out." in client.get("/login").data
     assert client.get("/complaints").status_code == 302
 
 
@@ -389,7 +401,8 @@ def test_logout_via_get_still_works(client):
 
     response = client.get("/logout")
 
-    assert b"Logged out successfully" in response.data
+    assert response.status_code == 302
+    assert b"You have been logged out." in client.get("/login").data
     assert client.get("/complaints").status_code == 302
 
 
@@ -414,6 +427,8 @@ def test_admin_navigation_is_unchanged(client):
 
 def register(client, name="New User", email="new@example.com",
              password="password123"):
+    # Follows the redirect, so a successful registration returns the login
+    # page with its "Registration successful" message.
     csrf(client)
     return client.post(
         "/register",
@@ -422,7 +437,8 @@ def register(client, name="New User", email="new@example.com",
             "email": email,
             "password": password,
             "csrf_token": "test-token"
-        }
+        },
+        follow_redirects=True
     )
 
 
@@ -650,3 +666,65 @@ def test_fixture_uses_temporary_database_not_local_db(client):
     assert bound != local_db
     assert bound == os.path.abspath(TEST_DB_PATH)
     assert app.config["SQLALCHEMY_DATABASE_URI"] == TEST_DB_URI
+
+
+# --- Redirects with success messages (Issue #52) ---
+
+def test_register_success_message_shows_once(client):
+    register(client)
+
+    assert b"Registration successful" not in client.get("/login").data
+
+
+def test_failed_registration_does_not_redirect(client):
+    response = register(client, password="short")
+
+    assert response.request.path == "/register"
+    assert b"Registration successful" not in response.data
+
+
+def test_complaint_submit_lands_on_my_complaints(client):
+    login(client, "test@example.com", "password123")
+    csrf(client)
+
+    response = client.post(
+        "/complaint",
+        data={
+            "title": "Broken chair",
+            "description": "Chair in room 204 is broken",
+            "category": "Infrastructure",
+            "csrf_token": "test-token"
+        },
+        follow_redirects=True
+    )
+
+    assert response.request.path == "/complaints"
+    assert b"Complaint submitted successfully." in response.data
+    assert b"Broken chair" in response.data
+    assert b"Complaint submitted successfully." not in client.get("/complaints").data
+
+
+def test_failed_complaint_does_not_redirect(client):
+    login(client, "test@example.com", "password123")
+    csrf(client)
+
+    response = client.post(
+        "/complaint",
+        data={"title": "", "description": "", "category": "", "csrf_token": "test-token"},
+        follow_redirects=True
+    )
+
+    assert response.request.path == "/complaint"
+    assert b"Complaint submitted successfully." not in response.data
+
+
+def test_logout_lands_on_login_with_message(client):
+    login(client, "test@example.com", "password123")
+    csrf(client)
+
+    response = client.post(
+        "/logout", data={"csrf_token": "test-token"}, follow_redirects=True
+    )
+
+    assert response.request.path == "/login"
+    assert b"You have been logged out." in response.data
