@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Details</title>
+</head>
+<body>
+    <h1>Complaint Details</h1>
+
+    <p><strong>Title:</strong> {{ complaint.title }}</p>
+    <p><strong>Description:</strong> {{ complaint.description }}</p>
+    <p><strong>Category:</strong> {{ complaint.category }}</p>
+    <p><strong>Status:</strong> {{ complaint.status }}</p>
+
+    {% if complaint.resolution %}
+        <p><strong>Resolution:</strong> {{ complaint.resolution }}</p>
+    {% endif %}
+
+    <p><strong>Created:</strong>
+        {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') }}
+    </p>
+
+    <p><strong>Last Updated:</strong>
+        {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}
+    </p>
+
+    <a href="{{ url_for('complaints.complaints') }}">Back to My Complaints</a>
+</body>
+</html>
