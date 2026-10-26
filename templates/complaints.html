@@ -2,8 +2,12 @@
 <html>
 <head>
     <title>My Complaints</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<div class="container">
+    {% include '_nav.html' %}
     <h1>My Complaints</h1>
     {% if complaints %}
         {% for complaint in complaints %}
@@ -32,5 +36,6 @@
     {% else %}
         <p>You have not submitted any complaints.</p>
     {% endif %}
+</div>
 </body>
 </html>

@@ -21,6 +21,42 @@ if not app.secret_key:
     )
 
 
+SQLITE_URI = "sqlite:///complaints.db"
+
+
+def get_database_uri(environ=None):
+    """Choose the database from DATABASE_URL.
+
+    Without DATABASE_URL the app uses local SQLite, but only outside
+    production. On Render (RENDER is set) or when REQUIRE_DATABASE_URL=1,
+    a missing DATABASE_URL is an error so data never silently lands on
+    the ephemeral disk.
+    """
+    environ = os.environ if environ is None else environ
+    url = (environ.get("DATABASE_URL") or "").strip()
+
+    if not url:
+        if environ.get("RENDER") or environ.get("REQUIRE_DATABASE_URL") == "1":
+            raise RuntimeError(
+                "DATABASE_URL is not set. Production needs a PostgreSQL "
+                "DATABASE_URL so data survives redeploys (see README)."
+            )
+        return SQLITE_URI
+
+    # Some providers still hand out the legacy "postgres://" scheme,
+    # which SQLAlchemy 2.x no longer accepts.
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+
+    if not url.startswith("postgresql"):
+        raise RuntimeError(
+            "DATABASE_URL must be a PostgreSQL URL "
+            "(postgres:// or postgresql://)."
+        )
+
+    return url
+
+
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = (
@@ -28,7 +64,8 @@ app.config["SESSION_COOKIE_SECURE"] = (
 )
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///complaints.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = get_database_uri()
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
@@ -61,7 +98,7 @@ def check_csrf():
 
 @app.route("/")
 def home():
-    return "Smart Complaint Management System"
+    return render_template("home.html", logged_in="user_id" in session)
 
 
 @app.errorhandler(403)
