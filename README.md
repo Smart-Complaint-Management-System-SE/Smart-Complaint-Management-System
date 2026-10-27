@@ -21,11 +21,13 @@ A web-based complaint management system developed using Flask and SQLite. The sy
 - Admin-only access control
 - Admin dashboard
 - View all submitted complaints
-- Filter complaints by status
-- View complaint details
-- Update complaint status
+- Filter complaints by status and category
+- Sort complaints newest or oldest first
+- View complaint details with submitted and last updated dates
+- Update complaint status using the allowed transitions
 - Add resolution remarks
-- Mark complaints as resolved
+- Mark complaints as resolved, and reopen them with a reason
+- See which admin changed a complaint and when
 - Unauthorized users receive a 403 Forbidden page
 
 ## Complaint Status
@@ -48,7 +50,7 @@ Any other change, such as Pending → Resolved or In Progress → Pending, is re
 
 ## User Guide
 
-This guide describes how the application works today. It covers normal user accounts only; administrators are not covered here.
+This guide describes how the application works today for normal user accounts. Administrators are covered in the [Admin Guide](#admin-guide).
 
 ### Before you start
 
@@ -101,6 +103,46 @@ A resolution appears under the complaint, labelled **Resolution**, once an admin
 ### 6. Log out
 
 Click **Logout** in the navigation bar. It ends your session and takes you to the login page with the message "You have been logged out."
+
+## Admin Guide
+
+### Creating an admin account
+
+1. Register a normal account at `/register`.
+2. Promote it to admin, with `SECRET_KEY` set as when running the app. Emails are stored in lowercase, so type it in lowercase:
+
+   ```bash
+   python3 make_admin.py admin@example.com
+   ```
+
+3. Log in. Admins are taken straight to the dashboard at `/admin`.
+
+### Using the dashboard
+
+- The cards at the top show how many complaints are Pending, In Progress and Resolved.
+- Use **Status**, **Category** and **Sort** to narrow and order the list, then **Apply Filters**. **Clear** resets them.
+- Each row shows the category, who submitted the complaint, and when it was submitted and last updated.
+
+### Managing a complaint
+
+1. Click **Manage** on a complaint.
+2. Choose a new status. The dropdown only offers the changes allowed from the current status (see [Complaint Status](#complaint-status)).
+3. Enter resolution remarks. They are required when marking a complaint **Resolved**.
+4. To reopen a resolved complaint, choose **In Progress** and give a reason.
+5. Click **Update Complaint**.
+
+Every change is recorded. The page shows who last updated the complaint and a history of all changes, including any reopen reason.
+
+Use the **Logout** button at the top of the admin pages to sign out.
+
+### Error pages
+
+| Page | Meaning |
+|------|---------|
+| 400 Bad Request | The form's security token was missing or out of date. Reload the page and try again. |
+| 403 Access Denied | You are not logged in as an admin. |
+| 404 Page Not Found | The page or complaint does not exist. |
+| 500 Internal Server Error | Something failed on the server. Nothing was saved; try again. |
 
 ## Configuration
 
