@@ -153,6 +153,8 @@ def login():
         if reserved and user and check_password_hash(user.password, password):
             login_limit.record_success(key, user.email)
 
+            session.clear()
+            session.permanent = True
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
@@ -173,7 +175,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout", methods=["GET", "POST"])
+@auth.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     flash("You have been logged out.")

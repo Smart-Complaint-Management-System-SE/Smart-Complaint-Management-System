@@ -1,6 +1,8 @@
 from extensions import db
 from datetime import datetime
 
+CATEGORIES = ["Academic", "Infrastructure", "Hostel", "Technical", "Other"]
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,6 +31,35 @@ class Complaint(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+
+
+class ComplaintUpdate(db.Model):
+    """One status or resolution change made by an admin."""
+    id = db.Column(db.Integer, primary_key=True)
+    complaint_id = db.Column(
+        db.Integer,
+        db.ForeignKey("complaint.id"),
+        nullable=False
+    )
+    admin_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False
+    )
+    old_status = db.Column(db.String(50))
+    new_status = db.Column(db.String(50), nullable=False)
+    note = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+def normalize_categories():
+    """Map old free-text categories onto CATEGORIES, falling back to Other."""
+    lookup = {c.lower(): c for c in CATEGORIES}
+
+    for c in Complaint.query.filter(Complaint.category.notin_(CATEGORIES)).all():
+        c.category = lookup.get((c.category or "").strip().lower(), "Other")
+
+    db.session.commit()
 
 
 class LoginAttempt(db.Model):
