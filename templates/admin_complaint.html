@@ -11,6 +11,9 @@
 
     <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
     <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
+    <p><strong>Category:</strong> {{ c.category }}</p>
+    <p><strong>Submitted:</strong> {{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}
+        | <strong>Last updated:</strong> {{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</p>
     <p><strong>Current status:</strong>
         <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
     {% if history %}

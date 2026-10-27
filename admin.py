@@ -31,6 +31,7 @@ def admin_dashboard():
 
     status = request.args.get("status")
     category = request.args.get("category")
+    sort = request.args.get("sort", "newest")
 
     query = Complaint.query
 
@@ -40,7 +41,13 @@ def admin_dashboard():
     if category in CATEGORIES:
         query = query.filter_by(category=category)
 
-    all_complaints = query.order_by(Complaint.id.desc()).all()
+    if sort == "oldest":
+        query = query.order_by(Complaint.created_at.asc(), Complaint.id.asc())
+    else:
+        sort = "newest"
+        query = query.order_by(Complaint.created_at.desc(), Complaint.id.desc())
+
+    all_complaints = query.all()
 
     users = {
         u.id: u.name
@@ -60,7 +67,8 @@ def admin_dashboard():
         statuses=STATUSES,
         categories=CATEGORIES,
         selected=status,
-        selected_category=category
+        selected_category=category,
+        sort=sort
     )
 
 
