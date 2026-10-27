@@ -30,12 +30,16 @@
 
         <label>Category:</label>
         <br>
-        <input
-            type="text"
-            name="category"
-            value="{{ request.form.get('category', '') }}"
-            required
-        >
+        <select name="category" required>
+            <option value="">Choose a category</option>
+
+            {% for category in categories %}
+                <option value="{{ category }}"
+                    {% if request.form.get('category') == category %}selected{% endif %}>
+                    {{ category }}
+                </option>
+            {% endfor %}
+        </select>
 
         <br><br>
 

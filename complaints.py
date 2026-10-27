@@ -4,7 +4,7 @@ from sqlalchemy import func
 
 from admin import STATUSES
 from extensions import db
-from models import Complaint
+from models import Complaint, CATEGORIES
 
 complaint_bp = Blueprint("complaints", __name__)
 
@@ -23,6 +23,8 @@ def complaint():
 
         if not title or not description or not category:
             error = "Title, description, and category are required."
+        elif category not in CATEGORIES:
+            error = "Please choose a category from the list."
         else:
             new_complaint = Complaint(
                 title=title,
@@ -37,7 +39,11 @@ def complaint():
             flash("Complaint submitted successfully.")
             return redirect(url_for("complaints.complaints"))
 
-    return render_template("complaint.html", error=error)
+    return render_template(
+        "complaint.html",
+        error=error,
+        categories=CATEGORIES
+    )
 
 
 @complaint_bp.route("/complaints")

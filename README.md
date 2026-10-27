@@ -71,7 +71,7 @@ Open `/complaint` while logged in. If you are not logged in you are sent to the 
 - If a field is empty, the form is shown again with your entries kept and the message "Title, description, and category are required."
 - On success you are taken to **My complaints** with the message "Complaint submitted successfully." A new complaint starts with the status **Pending**.
 
-**Choosing a category:** the category is free text and is not checked against a fixed list, but the field must not be empty. Type any category name; the application does not offer a list.
+**Choosing a category:** pick one of **Academic**, **Infrastructure**, **Hostel**, **Technical** or **Other** from the dropdown. Any other value is rejected with "Please choose a category from the list." The same list is used by the admin category filter, and older complaints with free-text categories are mapped onto it (anything unrecognised becomes **Other**).
 
 ### 4. Track your complaints and their status
 
