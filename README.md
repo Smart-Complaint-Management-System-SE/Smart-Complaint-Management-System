@@ -36,6 +36,16 @@ The system supports three complaint statuses:
 - **In Progress** – Complaint is currently being handled.
 - **Resolved** – Complaint has been resolved by the administrator.
 
+Allowed status changes:
+
+| From | To | Rule |
+|------|----|------|
+| Pending | In Progress | Admin starts handling the complaint |
+| In Progress | Resolved | Resolution remarks are required |
+| Resolved | In Progress | Reopening needs a reason |
+
+Any other change, such as Pending → Resolved or In Progress → Pending, is rejected. An admin can keep the current status and still edit the resolution remarks.
+
 ## User Guide
 
 This guide describes how the application works today. It covers normal user accounts only; administrators are not covered here.
