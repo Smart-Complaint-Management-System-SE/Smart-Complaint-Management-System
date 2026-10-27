@@ -59,6 +59,10 @@ def new_client(fresh_db):
 
 
 def attempt(client, email, password, **extra):
+    # A successful login clears the session (including the CSRF token), so
+    # set the token again before every attempt, as a fresh login page would.
+    with client.session_transaction() as session:
+        session["csrf_token"] = "test-token"
     data = {"csrf_token": "test-token", "email": email, "password": password}
     data.update(extra)
     return client.post("/login", data=data)

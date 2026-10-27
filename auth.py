@@ -153,6 +153,8 @@ def login():
         if reserved and user and check_password_hash(user.password, password):
             login_limit.record_success(key, user.email)
 
+            session.clear()
+            session.permanent = True
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
