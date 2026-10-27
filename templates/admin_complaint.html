@@ -13,6 +13,11 @@
     <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
     <p><strong>Current status:</strong>
         <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
+    {% if history %}
+        <p><strong>Last updated by:</strong>
+            {{ admins.get(history[0].admin_id, 'Unknown') }}
+            on {{ history[0].created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+    {% endif %}
     <p><strong>Description:</strong></p>
     <div class="box">{{ c.description }}</div>
 
@@ -39,6 +44,28 @@
 
         <button type="submit">Update Complaint</button>
     </form>
+
+    <h2>History</h2>
+    {% if history %}
+        <table>
+            <tr>
+                <th>When</th>
+                <th>Admin</th>
+                <th>Change</th>
+                <th>Note</th>
+            </tr>
+            {% for h in history %}
+            <tr>
+                <td>{{ h.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                <td>{{ admins.get(h.admin_id, 'Unknown') }}</td>
+                <td>{{ h.old_status }} &rarr; {{ h.new_status }}</td>
+                <td>{{ h.note or '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No changes yet.</p>
+    {% endif %}
 
 </div>
 </body>
