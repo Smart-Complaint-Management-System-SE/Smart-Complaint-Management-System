@@ -1,3 +1,4 @@
+[![tests](https://github.com/Smart-Complaint-Management-System-SE/Smart-Complaint-Management-System/actions/workflows/tests.yml/badge.svg)](https://github.com/Smart-Complaint-Management-System-SE/Smart-Complaint-Management-System/actions/workflows/tests.yml)
 # Smart Complaint Management System
 
 A web-based complaint management system developed using Flask and SQLite. The system allows users to register, log in, submit complaints, track their complaints, and view their current status. Administrators can manage all submitted complaints, update their status, and provide resolution details.
