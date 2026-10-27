@@ -175,7 +175,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@auth.route("/logout", methods=["GET", "POST"])
+@auth.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     flash("You have been logged out.")

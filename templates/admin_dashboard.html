@@ -12,7 +12,7 @@
         <h1>Admin Dashboard</h1>
         <span>
             Logged in as {{ session['user_name'] }} |
-            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% include '_logout.html' %}
         </span>
     </div>
 

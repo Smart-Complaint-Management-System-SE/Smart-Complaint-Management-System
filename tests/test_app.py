@@ -396,14 +396,13 @@ def test_logout_via_post_requires_csrf_token(client):
     assert client.get("/complaints").status_code == 200
 
 
-def test_logout_via_get_still_works(client):
+def test_logout_via_get_is_rejected(client):
     login(client, "test@example.com", "password123")
 
     response = client.get("/logout")
 
-    assert response.status_code == 302
-    assert b"You have been logged out." in client.get("/login").data
-    assert client.get("/complaints").status_code == 302
+    assert response.status_code == 405
+    assert client.get("/complaints").status_code == 200
 
 
 def test_admin_login_still_redirects_to_admin(client):
@@ -413,13 +412,14 @@ def test_admin_login_still_redirects_to_admin(client):
     assert response.location.endswith("/admin")
 
 
-def test_admin_navigation_is_unchanged(client):
+def test_admin_navigation_has_logout_form(client):
     login(client, "admin@example.com", "admin123")
 
     html = client.get("/admin").data.decode()
 
     assert "<nav>" not in html
-    assert 'href="/logout">Logout</a>' in html
+    assert 'action="/logout"' in html
+    assert 'href="/logout"' not in html
     assert "Logged in as Admin" in html
 
 
