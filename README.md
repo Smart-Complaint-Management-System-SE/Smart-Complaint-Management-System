@@ -136,6 +136,15 @@ python app.py
 
 All forms that submit data with POST include a CSRF token, and a POST request without a valid token is rejected with 400 Bad Request.
 
+## Running the Tests
+
+```bash
+pip install -r requirements.txt
+python3 -m pytest
+```
+
+The tests always use their own temporary database (set up in `tests/conftest.py`), so they never change `instance/complaints.db` or a production database.
+
 ## Deployment Notes
 
 This section records what the code in this repository shows (the `main` branch at commit `2cc96e3`). It is not a verified description of any hosted environment, and its remarks about hosting are general cautions.
@@ -194,7 +203,10 @@ Smart-Complaint-Management-System/
 │   ├── login.html
 │   └── register.html
 ├── tests/
-│   └── test_app.py
+│   ├── conftest.py
+│   ├── test_admin.py
+│   ├── test_app.py
+│   └── test_login_lockout.py
 ├── .gitignore
 ├── README.md
 ├── admin.py
@@ -215,7 +227,7 @@ This tree reflects the baseline `main` branch at commit `2cc96e3` and may change
 - `admin.py` – admin dashboard and complaint management
 - `models.py` and `extensions.py` – the `User` and `Complaint` models and the shared database object
 - `make_admin.py` – promotes an already registered user to administrator
-- `tests/test_app.py` – automated tests
+- `tests/` – automated tests: `test_app.py` (user side), `test_admin.py` (admin side), `test_login_lockout.py` (login rate limiting), with shared setup in `conftest.py`
 
 The `instance/` folder holding the SQLite database is created when the app first starts and is not part of the repository.
 
