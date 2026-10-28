@@ -112,3 +112,10 @@ def fresh_db():
         db.session.remove()
         assert_test_database()
         db.drop_all()
+
+@pytest.fixture
+def client(fresh_db):
+    """Flask test client using a fresh test database."""
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client
