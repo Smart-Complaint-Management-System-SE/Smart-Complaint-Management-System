@@ -1,4 +1,12 @@
+import logging
 import re
+
+from flask import (
+    Blueprint, flash, make_response, render_template, request, session,
+    redirect, url_for
+)
+
+logger = logging.getLogger(__name__)
 
 from flask import (
     Blueprint, flash, make_response, render_template, request, session,
@@ -146,11 +154,17 @@ def login():
             retry_after = login_limit.reserve_attempt(key)
 
             if retry_after is not None:
-                return locked_out(retry_after)
+              logger.warning("Login attempt rate-limited")
+              return locked_out(retry_after)
 
             reserved = True
 
         if reserved and user and check_password_hash(user.password, password):
+            logger.info(
+                  "Successful login: user_id=%s role=%s",
+                  user.id,
+                  user.role,
+           )
             login_limit.record_success(key, user.email)
 
             session.clear()
@@ -158,17 +172,21 @@ def login():
             session["user_id"] = user.id
             session["user_name"] = user.name
             session["role"] = user.role
-
             if user.role == "admin":
                 return redirect(url_for("admin.admin_dashboard"))
 
             return redirect(url_for("complaints.dashboard"))
 
+
         if reserved:
             retry_after = login_limit.record_failure(key)
 
+            logger.warning("Failed login attempt")
+
             if retry_after is not None:
+                logger.warning("Login attempt rate-limited")
                 return locked_out(retry_after)
+
 
         error = "Invalid email or password."
 

@@ -1,3 +1,16 @@
+
+import logging
+
+from flask import Blueprint, render_template, request, session, abort, redirect, url_for
+
+from extensions import db
+from models import User, Complaint, ComplaintUpdate, CATEGORIES
+
+logger = logging.getLogger(__name__)
+
+
+admin = Blueprint("admin", __name__)
+
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
@@ -72,6 +85,7 @@ def admin_dashboard():
     )
 
 
+
 @admin.route(
     "/admin/complaint/<int:complaint_id>",
     methods=["GET", "POST"]
@@ -103,15 +117,21 @@ def admin_complaint(complaint_id):
             error = "A reason is required to reopen a resolved complaint."
 
         else:
-            remarks_changed = bool(resolution) and resolution != (c.resolution or "")
+            remarks_changed = (
+                bool(resolution) and resolution != (c.resolution or "")
+            )
+            old_status = c.status
 
-            if new_status != c.status or remarks_changed:
+            if old_status != new_status or remarks_changed:
                 db.session.add(ComplaintUpdate(
                     complaint_id=c.id,
                     admin_id=session.get("user_id"),
-                    old_status=c.status,
+                    old_status=old_status,
                     new_status=new_status,
-                    note=reason or ("Resolution remarks updated" if remarks_changed else None)
+                    note=reason or (
+                        "Resolution remarks updated"
+                        if remarks_changed else None
+                    )
                 ))
 
             c.status = new_status
@@ -120,6 +140,17 @@ def admin_complaint(complaint_id):
                 c.resolution = resolution
 
             db.session.commit()
+
+            if old_status != new_status or remarks_changed:
+                logger.info(
+                    "Admin complaint update: admin_id=%s complaint_id=%s "
+                    "old_status=%s new_status=%s remarks_changed=%s",
+                    session.get("user_id"),
+                    c.id,
+                    old_status,
+                    new_status,
+                    remarks_changed,
+                )
 
             return redirect(url_for("admin.admin_dashboard"))
 

@@ -1,3 +1,5 @@
+
+import logging
 import os
 import secrets
 from datetime import timedelta
@@ -10,8 +12,20 @@ from auth import auth
 from complaints import complaint_bp
 from admin import admin
 
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 app = Flask(__name__)
+
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
@@ -114,6 +128,10 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
+    app.logger.error(
+        "Unhandled application error",
+        exc_info=(type(e), e, e.__traceback__),
+    )
     db.session.rollback()
     return render_template("500.html"), 500
 
