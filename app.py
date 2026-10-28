@@ -9,6 +9,7 @@ from models import normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
+from flask_migrate import Migrate
 
 
 app = Flask(__name__)
@@ -71,6 +72,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 app.register_blueprint(auth)
 app.register_blueprint(complaint_bp)
