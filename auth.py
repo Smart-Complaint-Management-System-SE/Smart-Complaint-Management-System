@@ -1,4 +1,5 @@
 import re
+import logging
 
 from flask import (
     Blueprint, flash, make_response, render_template, request, session,
@@ -12,6 +13,7 @@ from extensions import db
 from models import User
 
 auth = Blueprint("auth", __name__)
+logger = logging.getLogger(__name__)
 
 NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 100
@@ -169,6 +171,11 @@ def login():
 
             if retry_after is not None:
                 return locked_out(retry_after)
+
+        logger.warning(
+            "Failed login attempt email=%s",
+            email
+        )
 
         error = "Invalid email or password."
 

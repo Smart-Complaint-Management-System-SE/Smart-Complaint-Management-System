@@ -1,9 +1,11 @@
+import logging
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
 from models import User, Complaint, ComplaintUpdate, CATEGORIES
 
 admin = Blueprint("admin", __name__)
+logger = logging.getLogger(__name__)
 
 STATUSES = ["Pending", "In Progress", "Resolved"]
 
@@ -103,9 +105,18 @@ def admin_complaint(complaint_id):
             error = "A reason is required to reopen a resolved complaint."
 
         else:
+            old_status = c.status
             remarks_changed = bool(resolution) and resolution != (c.resolution or "")
 
             if new_status != c.status or remarks_changed:
+                logger.info(
+                    "Admin action admin_id=%s complaint_id=%s old_status=%s new_status=%s",
+                    session.get("user_id"),
+                    c.id,
+                    old_status,
+                    new_status
+                )
+
                 db.session.add(ComplaintUpdate(
                     complaint_id=c.id,
                     admin_id=session.get("user_id"),
