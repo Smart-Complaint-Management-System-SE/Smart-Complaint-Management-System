@@ -1,4 +1,3 @@
-
 import logging
 import os
 import secrets
@@ -7,26 +6,23 @@ from datetime import timedelta
 from flask import Flask, render_template, request, session, abort
 
 from extensions import db
-from models import normalize_categories
+from models import User, Complaint, normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
 from flask_migrate import Migrate
 
+
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
-log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(
-    level=getattr(logging, log_level, logging.INFO),
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
@@ -36,17 +32,14 @@ if not app.secret_key:
         "before starting the app (see README)."
     )
 
-
 SQLITE_URI = "sqlite:///complaints.db"
-
 
 def get_database_uri(environ=None):
     """Choose the database from DATABASE_URL.
 
     Without DATABASE_URL the app uses local SQLite, but only outside
-    production. On Render (RENDER is set) or when REQUIRE_DATABASE_URL=1,
-    a missing DATABASE_URL is an error so data never silently lands on
-    the ephemeral disk.
+    production. On Render, or when REQUIRE_DATABASE_URL=1, a missing
+    DATABASE_URL is an error.
     """
     environ = os.environ if environ is None else environ
     url = (environ.get("DATABASE_URL") or "").strip()
@@ -59,8 +52,6 @@ def get_database_uri(environ=None):
             )
         return SQLITE_URI
 
-    # Some providers still hand out the legacy "postgres://" scheme,
-    # which SQLAlchemy 2.x no longer accepts.
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
 
@@ -71,6 +62,21 @@ def get_database_uri(environ=None):
         )
 
     return url
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+app.secret_key = os.environ.get("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError(
+        "SECRET_KEY is not set. Set the SECRET_KEY environment variable "
+        "before starting the app (see README)."
+    )
 
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -115,11 +121,16 @@ def check_csrf():
 
 @app.route("/")
 def home():
-    return render_template("home.html", logged_in="user_id" in session)
+    return "Smart Complaint Management System"
 
 
 @app.errorhandler(403)
 def forbidden(e):
+    logger.warning(
+        "403 response route=%s user_id=%s",
+        request.path,
+        session.get("user_id")
+    )
     return render_template("403.html"), 403
 
 
@@ -135,12 +146,16 @@ def internal_server_error(e):
         exc_info=(type(e), e, e.__traceback__),
     )
     db.session.rollback()
+    logger.exception(
+        "500 error route=%s exception=%s",
+        request.path,
+        e
+    )
     return render_template("500.html"), 500
 
 
 with app.app_context():
     db.create_all()
-    normalize_categories()
 
 
 if __name__ == "__main__":
