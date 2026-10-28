@@ -1,14 +1,15 @@
 import logging
+
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
 from models import User, Complaint, ComplaintUpdate, CATEGORIES
 
-admin = Blueprint("admin", __name__)
 logger = logging.getLogger(__name__)
 
-STATUSES = ["Pending", "In Progress", "Resolved"]
+admin = Blueprint("admin", __name__)
 
+STATUSES = ["Pending", "In Progress", "Resolved"]
 # Next statuses an admin may choose (FR-09). Keeping the same status is
 # always allowed so that resolution remarks can still be edited.
 TRANSITIONS = {
@@ -74,6 +75,7 @@ def admin_dashboard():
     )
 
 
+
 @admin.route(
     "/admin/complaint/<int:complaint_id>",
     methods=["GET", "POST"]
@@ -116,13 +118,15 @@ def admin_complaint(complaint_id):
                     old_status,
                     new_status
                 )
-
                 db.session.add(ComplaintUpdate(
                     complaint_id=c.id,
                     admin_id=session.get("user_id"),
-                    old_status=c.status,
+                    old_status=old_status,
                     new_status=new_status,
-                    note=reason or ("Resolution remarks updated" if remarks_changed else None)
+                    note=reason or (
+                        "Resolution remarks updated"
+                        if remarks_changed else None
+                    )
                 ))
 
             c.status = new_status
@@ -131,6 +135,17 @@ def admin_complaint(complaint_id):
                 c.resolution = resolution
 
             db.session.commit()
+
+            if old_status != new_status or remarks_changed:
+                logger.info(
+                    "Admin complaint update: admin_id=%s complaint_id=%s "
+                    "old_status=%s new_status=%s remarks_changed=%s",
+                    session.get("user_id"),
+                    c.id,
+                    old_status,
+                    new_status,
+                    remarks_changed,
+                )
 
             return redirect(url_for("admin.admin_dashboard"))
 

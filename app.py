@@ -1,6 +1,6 @@
+import logging
 import os
 import secrets
-import logging
 from datetime import timedelta
 
 from flask import Flask, render_template, request, session, abort
@@ -10,10 +10,29 @@ from models import User, Complaint, normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
+from flask_migrate import Migrate
+
+
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-SQLITE_URI = "sqlite:///complaints.db"
 
+app.secret_key = os.environ.get("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError(
+        "SECRET_KEY is not set. Set the SECRET_KEY environment variable "
+        "before starting the app (see README)."
+    )
+
+SQLITE_URI = "sqlite:///complaints.db"
 
 def get_database_uri(environ=None):
     """Choose the database from DATABASE_URL.
@@ -73,6 +92,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 app.register_blueprint(auth)
 app.register_blueprint(complaint_bp)
@@ -121,6 +141,10 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
+    app.logger.error(
+        "Unhandled application error",
+        exc_info=(type(e), e, e.__traceback__),
+    )
     db.session.rollback()
     logger.exception(
         "500 error route=%s exception=%s",
