@@ -171,110 +171,188 @@ A browser requests a page. The Flask route runs the CSRF check for POST requests
 | 6 | `admin.admin_complaint` | Sets the status, stores the remarks if any were entered, and commits; `updated_at` is refreshed by the model |
 | 7 | `admin.admin_complaint` | Redirects to `/admin` |
 
-## 3.4 Routes
 
-The application is server-rendered. It has no JSON API and no `/api/...` routes; the endpoints of version 1.0 do not exist. Routes on `main` (code inspection):
+## 3.4 API and Route Interface Design
 
-@widths 22 9 24 20 25
-| Path | Methods | Endpoint | Access | Behaviour |
-|---|---|---|---|---|
-| `/` | GET | `home` | Public | Returns the plain text "Smart Complaint Management System" |
-| `/register` | GET, POST | `auth.register` | Public | POST requires name, email and password to be non-empty; an email that already exists (exact match) is rejected; success returns text |
-| `/login` | GET, POST | `auth.login` | Public | Admin success redirects to `/admin`; user success returns "Welcome, name!"; failure shows "Invalid email or password." |
-| `/logout` | GET | `auth.logout` | Anyone | Clears the session and returns text |
-| `/complaint` | GET, POST | `complaints.complaint` | Logged in; otherwise redirect to `/login` | Form and submission as in section 3.2 |
-| `/complaints` | GET | `complaints.complaints` | Logged in; otherwise redirect to `/login` | Lists the session user's complaints with status, timestamps and resolution |
-| `/admin` | GET | `admin.admin_dashboard` | Admin only; otherwise 403, including for logged-out users | Counts per status, complaint list, optional `status` and `category` query filters |
-| `/admin/complaint/`\n`<int:complaint_id>` | GET, POST | `admin.admin_complaint` | Admin only; 404 if the complaint does not exist | Shows a complaint and accepts a status and remarks (see limitation 8) |
-| `/static/`\n`<path:filename>` | GET | `static` | Public | Serves `static/style.css` |
+The Smart Complaint Management System uses Flask routes to handle communication between the browser and the server. The application follows a server-rendered architecture using HTML forms and Jinja2 templates. It does not currently implement a separate JSON REST API or `/api/...` endpoints.
 
-Every POST request is checked by `app.check_csrf` before the route runs, and is answered with 400 if the token is missing or does not match.
+### 3.4.1 Route Specifications
+
+| Path | Methods | Access | Description |
+|---|---|---|---|
+| `/` | GET | Public | Displays the application home response. |
+| `/register` | GET, POST | Public | Displays the registration form and creates a new user account. |
+| `/login` | GET, POST | Public | Displays the login form and authenticates users. |
+| `/logout` | POST | Logged-in user | Logs out the current user and clears the session. |
+| `/complaint` | GET, POST | Logged-in user | Displays the complaint form and submits a new complaint. |
+| `/complaints` | GET | Logged-in user | Displays complaints submitted by the current user. |
+| `/dashboard` | GET | Logged-in user | Displays the user's dashboard and complaint status counts. |
+| `/complaints/<int:complaint_id>` | GET | Complaint owner | Displays the details of a complaint belonging to the logged-in user. |
+| `/admin` | GET | Admin only | Displays all complaints with status and category filters. |
+| `/admin/complaint/<int:complaint_id>` | GET, POST | Admin only | Displays complaint details and allows administrators to update status and resolution remarks. |
+
+### 3.4.2 Request and Response Design
+
+- GET requests retrieve pages and display information using Jinja2 templates.
+- POST requests submit registration, login, complaint and administrative form data.
+- Successful operations may return rendered pages, text responses or redirects.
+- Invalid form submissions return an appropriate error message.
+- Unauthenticated users are redirected to the login page for protected user routes.
+- Unauthorized access to administrator routes is rejected with HTTP 403.
+- Invalid complaint identifiers return HTTP 404.
+
+### 3.4.3 Security of Route Communication
+
+- POST requests are protected using CSRF token validation.
+- User routes verify the logged-in session.
+- Administrator routes verify the user's admin role.
+- Complaint details are restricted to their owner.
+- Passwords are stored using password hashing rather than plain text.
+
+**Design limitation:** The current application does not expose JSON REST endpoints. A separate REST API may be introduced in a future version if integration with mobile applications or external services is required.
+
+
 
 ## 3.4a Data Model
 
-Two models are defined in `models.py` (code inspection). There is no other model.
+Five database models are defined in `models.py` (code inspection). They store user information, complaints, complaint update history and login attempt records.
 
 **User**
 
-@widths 20 28 52
 | Field | Type | Constraints |
 |---|---|---|
 | `id` | Integer | Primary key |
 | `name` | String(100) | Required |
 | `email` | String(120) | Required, unique |
-| `password` | String(200) | Required; stores the hash |
-| `role` | String(20) | Default `user`; `admin` for administrators |
+| `password` | String(200) | Required; stores the password hash |
+| `role` | String(20) | Default: `user`; `admin` for administrators |
 
 **Complaint**
 
-@widths 20 28 52
 | Field | Type | Constraints |
 |---|---|---|
 | `id` | Integer | Primary key |
 | `title` | String(200) | Required |
 | `description` | Text | Required |
-| `category` | String(50) | Required, default `Other`; free text on submission |
-| `status` | String(50) | Default `Pending` |
+| `category` | String(50) | Required; default: `Other` |
+| `status` | String(50) | Default: `Pending` |
 | `resolution` | Text | Optional |
-| `user_id` | Integer | Foreign key to `user.id`, required |
-| `created_at` | DateTime | Default: current UTC time |
-| `updated_at` | DateTime | Default: current UTC time; refreshed on update |
+| `user_id` | Integer | Foreign key referencing `user.id`; required |
+| `created_at` | DateTime | Defaults to current UTC time |
+| `updated_at` | DateTime | Defaults to current UTC time; updated when the record changes |
+
+**ComplaintUpdate**
+
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | Primary key |
+| `complaint_id` | Integer | Foreign key referencing `complaint.id`; required |
+| `admin_id` | Integer | Foreign key referencing `user.id`; required |
+| `old_status` | String(50) | Optional |
+| `new_status` | String(50) | Required |
+| `note` | Text | Optional |
+| `created_at` | DateTime | Defaults to current UTC time |
+
+This model records status or resolution changes made by an administrator.
+
+**LoginAttempt**
+
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | Primary key |
+| `email` | String(120) | Required, unique |
+| `last_attempt_at` | DateTime | Required |
+| `locked_until` | DateTime | Optional; stores the lock expiry time |
+
+This model stores login lock information for each normalized email address.
+
+**LoginAttemptEvent**
+
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | Primary key |
+| `email` | String(120) | Required |
+| `attempted_at` | DateTime | Required |
+
+This model records individual login attempts. Database indexes are defined on `email` with `attempted_at`, and on `attempted_at`, to support efficient login-attempt queries.
+
 
 ## 3.4b Status Behaviour
 
-The status values are `Pending`, `In Progress` and `Resolved` (list `STATUSES` in `admin.py`). A new complaint is `Pending`. On the admin complaint form (code inspection):
+The complaint status values are `Pending`, `In Progress` and `Resolved`, defined in `STATUSES` in `admin.py`. A newly submitted complaint is assigned the `Pending` status.
 
-- The submitted status must be one of the three values; otherwise "Invalid status." is shown.
-- A status of `Resolved` requires non-empty resolution remarks; otherwise "Resolution remarks are required." is shown.
-- Remarks, when entered, are saved with whatever status is chosen.
-- Any of the three statuses can be set from any other, including `Resolved` back to `Pending`. There is no transition graph.
-- No record is kept of who changed a complaint or what it was before; only the current `status`, `resolution` and `updated_at` are stored.
+The application enforces the following status transitions:
+
+- `Pending` → `In Progress`
+- `In Progress` → `Resolved`
+- `Resolved` → `In Progress` (reopening a resolved complaint)
+- The current status may remain unchanged when an admin edits resolution remarks.
+
+The following validation rules are applied:
+
+- The submitted status must be one of the three allowed values; otherwise, an "Invalid status." message is shown.
+- Resolution remarks are required when changing a complaint to `Resolved`.
+- A reason is required when reopening a `Resolved` complaint to `In Progress`.
+- Invalid status transitions are rejected.
+
+Changes to complaint status and resolution remarks are recorded in the `ComplaintUpdate` model. Each record stores the complaint ID, admin ID, previous status, new status, optional note and timestamp. This provides a history of administrative updates rather than storing only the current complaint status.
 
 ## 3.5 Error Handling, Logging and Monitoring
 
-@widths 30 70
 | Condition | Behaviour (code inspection) |
 |---|---|
-| Missing or invalid CSRF token | `abort(400)`; the framework's default 400 page is shown |
-| Not an administrator | 403 with `templates/403.html` |
-| Unknown URL or complaint id | 404 with `templates/404.html` |
-| Unexpected server error | 500 with `templates/500.html`; the database session is rolled back |
-| Invalid form input | The form is shown again with a message from the route |
-| 401 and 409 | Not used |
-| Logging and monitoring | No application logging is configured |
+| Missing or invalid CSRF token | The request is rejected using `abort(400)`. |
+| Not an administrator | Returns 403 with `templates/403.html`. |
+| Unknown URL or complaint ID | Returns 404 with `templates/404.html`. |
+| Unexpected server error | Returns 500 with `templates/500.html`; the database session is rolled back. |
+| Invalid form input | The form is displayed again with a validation message from the route. |
+| 401 and 409 | Not used by the current application routes. |
+| Logging | Administrative complaint actions are logged in the application. |
+| Monitoring | No dedicated monitoring or alerting system is configured. |
 
 ## 3.6 UX Design
 
 - Keep complaint submission concise and clearly labelled.
-- Show current status prominently.
-- Use consistent status labels and success/error feedback.
-- Separate user/admin navigation.
+- Show the current complaint status prominently.
+- Use consistent status labels and provide success/error feedback.
+- Separate user and admin navigation.
+- Provide an admin dashboard with complaint filtering and sorting.
+- Allow users to view their own complaints and individual complaint details.
+- Provide clear validation messages for invalid form submissions.
 
-Note for version 1.1: the admin dashboard has its own header with a logout link. A shared navigation bar and home page for users are in pending PR #87 and are not part of `main`. Success feedback after registration, login and complaint submission is plain text.
+Note for version 1.1: The application provides separate user and administrator interfaces. Users can submit and track complaints, while administrators can manage complaints and update their status and resolution remarks.
 
-## 3.7 Open Issues and Next Steps
+## 3.7 Implementation Status and Next Steps
 
-Pending pull requests (not merged into `main`): #83 complaint detail page; #84 shared styling for user and error pages; #85 configurable production database support; #86 registration validation; #87 home page and user dashboard.
+The current implementation includes the following features:
 
-Open issues taken from the public issue list that affect this design:
-- #41 admin complaint page crashes after the module split; #42 fixed category list so the admin category filter works.
-- #43 enforce allowed status transitions; #45 record which admin updated a complaint and when.
-- #44 automated tests for admin features; #53 integration test report; #54 run pytest in CI.
-- #47 logout as a POST request with a CSRF token; #70 limit repeated failed logins.
-- #51 user complaint detail page; #52 success messages; #61 logging without secrets.
-- #62 database migrations; #73 keep production data across redeploys.
+- User registration with input validation and password hashing.
+- User login with repeated failed-login attempt limiting.
+- Complaint submission, listing and individual complaint details.
+- Admin dashboard with complaint filtering and sorting.
+- Controlled complaint status transitions and administrative update history.
+- CSRF protection for POST requests, including logout.
+- Production database configuration and database migration support.
+- Error handling and administrative action logging.
+
+Areas for further verification and improvement:
+
+- Verify automated test coverage for user and administrator workflows.
+- Verify that automated tests run successfully in the CI pipeline.
+- Test database persistence during production deployment and redeployment.
+- Review application logging and monitoring before production release.
+- Perform integration testing across registration, login, complaint submission and administration workflows.
 
 ## 3.8 Verified Limitations
 
-These apply to `main` at commit `2cc96e3`. Items 1, 3 to 8 and 10 were established by code inspection and item 2 by Git history; none was confirmed by running the application for this document. Item 9 depends on how Flask-SQLAlchemy binds its engine, which was also observed when the project's tests were examined earlier; it was not re-run for this document.
+The following limitations and verification points apply to the current implementation based on code inspection:
 
-1. **No JSON API.** All pages are server-rendered; the `/api/...` endpoints of version 1.0 do not exist.
-2. **No `ComplaintUpdate` model.** Only `User` and `Complaint` exist, and no history entries are created. A history table was added by pull request #50 and removed again by pull request #82 (Git history).
-3. **No enforced status transition graph.** A status only has to be one of the three allowed values (section 3.4b).
-4. **Registration validation is minimal.** Name, email and password only have to be non-empty. Email matching is case-sensitive. Validation is in pending PR #86.
-5. **Session idle expiry is not applied.** A lifetime is configured, but the session is never marked permanent, and the session is not reset at login.
-6. **Logout is a GET request** and is not covered by the CSRF check.
-7. **The admin category filter and the free-text category.** Complaints accept any category text, while the admin filter accepts only a fixed list (`CATEGORIES` in `admin.py`) (Issue #42 is open).
-8. **Admin complaint page endpoint defect.** `templates/admin_complaint.html` builds its back link with `url_for('admin_dashboard')`, but the registered endpoint is `admin.admin_dashboard` (section 3.4). Rendering that template therefore fails, and the page cannot be shown. This is a code-inspection finding and was not executed (Issue #41 is open).
-9. **Tests and the database.** The fixture in `tests/test_app.py` sets `SQLALCHEMY_DATABASE_URI` after `app.py` has been imported, when the engine already exists, so it does not redirect the tests to a temporary database. The suite should only be run in an isolated copy of the repository.
-10. **No durability or hosting claim.** The database is a local SQLite file. This document makes no statement about production persistence, hosting or deployment; none is verified by the repository.
+1. **No JSON REST API.** The application uses server-rendered Flask and Jinja templates. The current implementation does not provide JSON REST API endpoints.
+2. **No dedicated monitoring system.** Administrative actions are logged, but a dedicated monitoring and alerting system is not configured.
+3. **Testing requires verification.** Automated tests should be executed to verify registration, authentication, complaint workflows, status transitions and administrative functions.
+4. **Production configuration requirements.** Production deployment requires the appropriate environment variables, including `SECRET_KEY` and `DATABASE_URL`.
+5. **Deployment persistence requires verification.** Production database configuration is supported, but database persistence must be verified in the actual hosting environment, especially across redeployments.
+6. **Security review is still required.** The application includes password hashing, CSRF protection and login attempt limiting. Further security testing should be performed before production release.
+7. **No dedicated performance evaluation is documented.** Application performance and scalability have not been established through formal load testing.
+
+These points are based on code inspection. Features should be tested in the target environment before being considered fully verified.
