@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,32 +9,74 @@
 <body>
 <div class="container">
     {% include '_nav.html' %}
+
     <h1>My Complaints</h1>
     {% include '_messages.html' %}
+
     {% if complaints %}
         {% for complaint in complaints %}
             <div>
                 <h2>{{ complaint.title }}</h2>
+
                 <a href="{{ url_for('complaints.complaint_detail', complaint_id=complaint.id) }}">
-    View Details
-</a>
+                    View Details
+                </a>
+
                 <p>{{ complaint.description }}</p>
+
                 <p>
                     <strong>Status:</strong> {{ complaint.status }}
                 </p>
-                
-                <!-- Added Timestamps Here -->
-                <p><strong>Created:</strong> {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</p>
-                <p><strong>Last Updated:</strong> {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}</p>
+
+                <p>
+                    <strong>Created:</strong>
+                    {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') }}
+                </p>
+
+                <p>
+                    <strong>Last Updated:</strong>
+                    {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}
+                </p>
 
                 {% if complaint.resolution %}
                     <p>
-                        <strong>Resolution:</strong> {{ complaint.resolution }}
+                        <strong>Resolution:</strong>
+                        {{ complaint.resolution }}
                     </p>
                 {% endif %}
+
                 <hr>
             </div>
         {% endfor %}
+
+        <!-- Pagination controls -->
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for(
+                    'complaints.complaints',
+                    page=pagination.prev_num,
+                    per_page=per_page
+                ) }}">
+                    &laquo; Previous
+                </a>
+            {% endif %}
+
+            <span>
+                Page {{ pagination.page }} of {{ pagination.pages }}
+                ({{ pagination.total }} complaints)
+            </span>
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for(
+                    'complaints.complaints',
+                    page=pagination.next_num,
+                    per_page=per_page
+                ) }}">
+                    Next &raquo;
+                </a>
+            {% endif %}
+        </div>
+
     {% else %}
         <p>You have not submitted any complaints.</p>
     {% endif %}

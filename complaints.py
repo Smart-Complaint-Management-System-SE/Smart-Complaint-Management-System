@@ -1,4 +1,7 @@
-from flask import Blueprint, flash, render_template, request, session, redirect, url_for
+from flask import (
+    Blueprint, flash, render_template, request,
+    session, redirect, url_for, jsonify
+)
 
 from sqlalchemy import func
 
@@ -47,19 +50,78 @@ def complaint():
     )
 
 
+
 @complaint_bp.route("/complaints")
 def complaints():
     if "user_id" not in session:
+        if request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": "Authentication required."}), 401
         return redirect(url_for("auth.login"))
 
-    user_complaints = Complaint.query.filter_by(
-        user_id=session["user_id"]
-    ).all()
+    # Read pagination parameters
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
 
+    # Handle invalid values
+    page = max(page or 1, 1)
+    per_page = max(1, min(per_page or 10, 100))
+
+    # Fetch only the logged-in user's complaints
+    query = Complaint.query.filter_by(
+        user_id=session["user_id"]
+    ).order_by(
+        Complaint.created_at.desc(),
+        Complaint.id.desc()
+    )
+
+    # Apply pagination
+    pagination = query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    # JSON response for API clients
+    if (
+        request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({
+            "page": pagination.page,
+            "per_page": pagination.per_page,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev,
+            "complaints": [
+                {
+                    "id": c.id,
+                    "title": c.title,
+                    "description": c.description,
+                    "category": c.category,
+                    "status": c.status,
+                    "resolution": c.resolution,
+                    "created_at": (
+                        c.created_at.isoformat()
+                        if c.created_at else None
+                    ),
+                    "updated_at": (
+                        c.updated_at.isoformat()
+                        if c.updated_at else None
+                    )
+                }
+                for c in pagination.items
+            ]
+        }), 200
+
+    # Existing HTML page
     return render_template(
         "complaints.html",
-        complaints=user_complaints
+        complaints=pagination.items,
+        pagination=pagination,
+        per_page=per_page
     )
+
 
 
 @complaint_bp.route("/dashboard")
