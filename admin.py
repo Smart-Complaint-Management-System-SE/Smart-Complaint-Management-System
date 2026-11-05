@@ -1,7 +1,10 @@
 from email_service import send_status_change_email
 import logging
 
-from flask import Blueprint, render_template, request, session, abort, redirect, url_for
+from flask import (
+    Blueprint, render_template, request, session,
+    abort, redirect, url_for, jsonify
+)
 
 from extensions import db
 from models import User, Complaint, ComplaintUpdate, get_category_names
@@ -27,6 +30,129 @@ def allowed_statuses(current):
 def admin_only():
     if session.get("role") != "admin":
         abort(403)
+
+
+@admin.route(
+    "/complaints/<int:complaint_id>/status",
+    methods=["PATCH"]
+)
+def update_complaint_status_api(complaint_id):
+    """Admin-only API for updating complaint status."""
+
+    # 1. Authorization
+    admin_only()
+
+    # 2. Validate JSON request body
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    new_status = data.get("status")
+
+    if not isinstance(new_status, str) or new_status not in STATUSES:
+        return jsonify({
+            "error": "Invalid status. Choose Pending, In Progress, or Resolved."
+        }), 400
+
+    resolution = data.get("resolution", "")
+    reason = data.get("reason", "")
+
+    if not isinstance(resolution, str) or not isinstance(reason, str):
+        return jsonify({
+            "error": "Resolution and reason must be strings."
+        }), 400
+
+    resolution = resolution.strip()
+    reason = reason.strip()
+
+    # 3. Find complaint
+    complaint = db.get_or_404(Complaint, complaint_id)
+    owner = db.session.get(User, complaint.user_id)
+
+    old_status = complaint.status
+
+    # 4. Validate allowed status transitions
+    if new_status not in allowed_statuses(old_status):
+        return jsonify({
+            "error": (
+                f"A complaint cannot move from "
+                f"{old_status} to {new_status}."
+            )
+        }), 400
+
+    reopening = old_status == "Resolved" and new_status == "In Progress"
+
+    if new_status == "Resolved" and not (resolution or complaint.resolution):
+        return jsonify({
+            "error": "Resolution remarks are required."
+        }), 400
+
+    if reopening and not reason:
+        return jsonify({
+            "error": "A reason is required to reopen a resolved complaint."
+        }), 400
+
+    # 5. Update complaint and record history
+    remarks_changed = (
+        bool(resolution) and resolution != (complaint.resolution or "")
+    )
+    status_changed = old_status != new_status
+
+    if status_changed or remarks_changed:
+        db.session.add(ComplaintUpdate(
+            complaint_id=complaint.id,
+            admin_id=session.get("user_id"),
+            old_status=old_status,
+            new_status=new_status,
+            note=reason or (
+                "Resolution remarks updated" if remarks_changed else None
+            )
+        ))
+
+    complaint.status = new_status
+
+    if resolution:
+        complaint.resolution = resolution
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            "Failed to update complaint status: complaint_id=%s",
+            complaint_id
+        )
+        return jsonify({
+            "error": "Unable to update complaint status."
+        }), 500
+
+    # 6. Send notification only when status actually changes
+    if status_changed and owner:
+        try:
+            send_status_change_email(
+                recipient=owner.email,
+                complaint=complaint,
+                old_status=old_status,
+                new_status=new_status
+            )
+        except Exception:
+            logger.exception(
+                "Status update email failed for complaint_id=%s",
+                complaint_id
+            )
+
+    # 7. Return JSON response
+    return jsonify({
+        "message": "Complaint status updated successfully.",
+        "complaint": {
+            "id": complaint.id,
+            "old_status": old_status,
+            "new_status": complaint.status,
+            "resolution": complaint.resolution
+        }
+    }), 200
+
 
 
 @admin.route("/admin")
