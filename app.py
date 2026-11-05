@@ -113,9 +113,12 @@ app.jinja_env.globals["csrf_token"] = csrf_token
 
 @app.before_request
 def check_csrf():
-    if request.method == "POST":
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         expected = session.get("csrf_token")
-        sent = request.form.get("csrf_token", "")
+        sent = (
+            request.headers.get("X-CSRF-Token")
+            or request.form.get("csrf_token", "")
+        )
 
         if not expected or not secrets.compare_digest(expected, sent):
             abort(400)
@@ -158,6 +161,8 @@ def internal_server_error(e):
 
 with app.app_context():
     db.create_all()
+    from models import seed_default_categories
+    seed_default_categories()
 
 
 if __name__ == "__main__":

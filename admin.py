@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
 
 from extensions import db
-from models import User, Complaint, ComplaintUpdate, CATEGORIES
+from models import User, Complaint, ComplaintUpdate, get_category_names
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,8 @@ def admin_dashboard():
     if status in STATUSES:
         query = query.filter_by(status=status)
 
-    if category in CATEGORIES:
+    categories = get_category_names()
+    if category in categories:
         query = query.filter_by(category=category)
 
     if sort == "oldest":
@@ -68,7 +69,7 @@ def admin_dashboard():
         users=users,
         counts=counts,
         statuses=STATUSES,
-        categories=CATEGORIES,
+        categories=categories,
         selected=status,
         selected_category=category,
         sort=sort
