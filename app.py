@@ -10,6 +10,7 @@ from models import User, Complaint, normalize_categories
 from auth import auth
 from complaints import complaint_bp
 from admin import admin
+from categories import categories_bp
 from flask_migrate import Migrate
 
 
@@ -97,6 +98,7 @@ migrate = Migrate(app, db)
 app.register_blueprint(auth)
 app.register_blueprint(complaint_bp)
 app.register_blueprint(admin)
+app.register_blueprint(categories_bp)
 
 
 def csrf_token():
