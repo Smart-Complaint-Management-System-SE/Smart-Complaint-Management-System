@@ -23,8 +23,8 @@ Success-rate target: ≥ 99 % for all endpoints under normal load.
 
 Usage
 -----
-# 1. Install locust
-    pip install locust
+# 1. Install locust (separate from main requirements — not needed for CI)
+    pip install -r requirements-load-test.txt
 
 # 2. Start the SCMS app in another terminal
     SECRET_KEY=test-key flask run

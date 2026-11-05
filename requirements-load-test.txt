@@ -1,0 +1,9 @@
+# Load testing dependencies — NOT installed by CI
+# Install manually before running load tests:
+#   pip install -r requirements-load-test.txt
+#
+# Then run:
+#   locust -f tests/locustfile.py --headless --host http://127.0.0.1:5000 \
+#          -u 20 -r 2 --run-time 60s --html reports/load_report.html
+
+locust>=2.0

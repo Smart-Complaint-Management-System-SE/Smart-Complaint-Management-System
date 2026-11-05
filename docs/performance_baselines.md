@@ -58,7 +58,9 @@ Burst of 100 users spawned at 50/s for 30 seconds. Models a sudden traffic surge
 
 ### Prerequisites
 ```bash
-pip install locust
+# Locust is NOT in requirements.txt (keeps CI fast).
+# Install separately before running load tests:
+pip install -r requirements-load-test.txt
 ```
 
 Start the SCMS app in a separate terminal:
