@@ -1,3 +1,4 @@
+from email_service import send_status_change_email
 import logging
 
 from flask import Blueprint, render_template, request, session, abort, redirect, url_for
@@ -136,6 +137,15 @@ def admin_complaint(complaint_id):
                 c.resolution = resolution
 
             db.session.commit()
+
+            # Notify the complaint owner only when the status changes.
+            if old_status != new_status and owner:
+                send_status_change_email(
+                    recipient=owner.email,
+                    complaint=c,
+                    old_status=old_status,
+                    new_status=new_status
+                )
 
             if old_status != new_status or remarks_changed:
                 logger.info(

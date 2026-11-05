@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytest
-
+import admin as admin_module
 from conftest import app, db
 from models import User, Complaint, ComplaintUpdate, normalize_categories
 
@@ -102,6 +102,43 @@ def test_tc10_resolution_saved(client):
     complaint = get_complaint(complaint_id)
     assert complaint.status == "Resolved"
     assert complaint.resolution == "Fan replaced"
+
+
+def test_status_change_sends_email_to_complaint_owner(
+    client, monkeypatch
+):
+    complaint_id = add_complaint()
+    login_admin(client)
+
+    sent_emails = []
+
+    def fake_send_email(recipient, complaint, old_status, new_status):
+        sent_emails.append({
+            "recipient": recipient,
+            "complaint_id": complaint.id,
+            "old_status": old_status,
+            "new_status": new_status
+        })
+        return True
+
+    monkeypatch.setattr(
+        admin_module,
+        "send_status_change_email",
+        fake_send_email
+    )
+
+    response = update(
+        client,
+        complaint_id,
+        status="In Progress"
+    )
+
+    assert response.status_code == 302
+    assert len(sent_emails) == 1
+    assert sent_emails[0]["recipient"] == "test@example.com"
+    assert sent_emails[0]["old_status"] == "Pending"
+    assert sent_emails[0]["new_status"] == "In Progress"
+
 
 
 def test_tc10_resolved_without_remarks_rejected(client):

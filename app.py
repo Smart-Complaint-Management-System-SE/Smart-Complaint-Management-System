@@ -79,6 +79,18 @@ if not app.secret_key:
         "before starting the app (see README)."
     )
 
+# Email notification configuration
+app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER")
+app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = (
+    os.environ.get("MAIL_DEFAULT_SENDER")
+    or os.environ.get("MAIL_USERNAME")
+)
+app.config["MAIL_USE_TLS"] = (
+    os.environ.get("MAIL_USE_TLS", "1") == "1"
+)
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
