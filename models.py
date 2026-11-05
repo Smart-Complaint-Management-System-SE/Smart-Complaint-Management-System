@@ -3,6 +3,31 @@ from datetime import datetime
 
 CATEGORIES = ["Academic", "Infrastructure", "Hostel", "Technical", "Other"]
 
+class Category(db.Model):
+    __tablename__ = "category"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+def seed_default_categories():
+    """Insert the original categories when the category table is empty."""
+    if Category.query.count() == 0:
+        db.session.add_all(
+            [Category(name=name) for name in CATEGORIES]
+        )
+        db.session.commit()
+
+
+def get_category_names():
+    """Return database categories, initializing defaults when necessary."""
+    seed_default_categories()
+
+    return [
+        category.name
+        for category in Category.query.order_by(Category.name.asc()).all()
+    ]
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
