@@ -4,7 +4,7 @@ from sqlalchemy import func
 
 from admin import STATUSES
 from extensions import db
-from models import Complaint, CATEGORIES
+from models import Complaint, get_category_names
 
 complaint_bp = Blueprint("complaints", __name__)
 
@@ -16,6 +16,7 @@ def complaint():
 
     error = None
 
+    categories = get_category_names()
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         description = request.form.get("description", "").strip()
@@ -23,7 +24,7 @@ def complaint():
 
         if not title or not description or not category:
             error = "Title, description, and category are required."
-        elif category not in CATEGORIES:
+        elif category not in categories:
             error = "Please choose a category from the list."
         else:
             new_complaint = Complaint(
@@ -42,7 +43,7 @@ def complaint():
     return render_template(
         "complaint.html",
         error=error,
-        categories=CATEGORIES
+        categories=categories
     )
 
 
