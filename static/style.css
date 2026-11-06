@@ -56,7 +56,7 @@ body {
 }
 
 .container {
-  max-width: 980px;
+  max-width: 1040px;
   margin: 30px auto;
   background: var(--color-bg-card);
   padding: 28px 36px;
@@ -71,6 +71,16 @@ body {
   margin-bottom: 24px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.user-meta .divider {
+  color: #cbd5e1;
 }
 
 a {
@@ -89,6 +99,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+th.sortable-th:focus-visible,
 [tabindex="0"]:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
@@ -135,29 +146,115 @@ nav[aria-label="Main Navigation"] a[aria-current="page"] {
   font-weight: 700;
   color: #0f172a;
 }
-
-.filters {
-  margin-bottom: 20px;
-  background: #f8fafc;
-  padding: 16px 20px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.card-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  margin-top: 4px;
 }
-.filters a {
-  margin-right: 8px;
+.card-pending {
+  border-left: 4px solid #f59e0b;
+}
+.card-in-progress {
+  border-left: 4px solid #3b82f6;
+}
+.card-resolved {
+  border-left: 4px solid #10b981;
+}
+
+/* Status Filter Chips (Issue #134) */
+.filter-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.status-chips-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.filter-heading {
+  font-weight: 600;
+  font-size: 14px;
+  color: #334155;
+}
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   border-radius: 20px;
-  display: inline-block;
   font-size: 13px;
-  border: 1px solid #cbd5e1;
+  font-weight: 500;
   background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
 }
-.filters a.active {
+.chip:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  text-decoration: none;
+}
+.chip.active {
   background: var(--color-primary);
   color: #ffffff;
   border-color: var(--color-primary);
   font-weight: 600;
-  text-decoration: none;
+}
+.chip.active .chip-count {
+  color: #dbeafe;
+}
+.chip-count {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Filter Controls Form */
+.filters-form {
+  margin: 0;
+}
+.filter-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.form-group-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-group-inline label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.filter-select {
+  width: auto;
+  min-width: 160px;
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* Accessible Tables */
@@ -182,6 +279,28 @@ th {
   background: #f8fafc;
   font-weight: 600;
   color: #1e293b;
+}
+.th-sort-link {
+  color: #1e293b;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.th-sort-link:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+.sort-icon {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.font-medium {
+  font-weight: 500;
+}
+.cell-id {
+  font-weight: 600;
+  color: #475569;
 }
 
 /* High contrast badges (all >= 4.5:1 text-to-bg contrast) */
@@ -356,6 +475,17 @@ p.error, p.success {
   border-radius: 4px;
 }
 
+/* Empty State */
+.empty-state {
+  padding: 36px 20px;
+  text-align: center;
+  color: #64748b;
+}
+.empty-state p {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -443,7 +573,7 @@ p.error, p.success {
   margin: 0;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .container {
     margin: 0;
     padding: 16px;
@@ -457,6 +587,30 @@ p.error, p.success {
     flex-direction: column;
     align-items: flex-start;
   }
+  .status-chips-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .filter-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-group-inline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .filter-select {
+    width: 100%;
+  }
+  .filter-buttons {
+    width: 100%;
+  }
+  .filter-buttons .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 600px) {
   .form-actions {
     flex-direction: column;
     width: 100%;
