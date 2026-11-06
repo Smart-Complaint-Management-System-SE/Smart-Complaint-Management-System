@@ -57,14 +57,7 @@
                 <label for="category" class="form-label">
                     Category <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
-                <select
-                    id="category"
-                    name="category"
-                    class="form-control"
-                    required
-                    aria-required="true"
-                    aria-describedby="category-help"
-                >
+                <select name="category" id="category" class="form-control" required aria-required="true" aria-describedby="category-help">
                     <option value="" {% if not request.form.get('category') %}selected{% endif %} disabled>
                         Choose a category
                     </option>
