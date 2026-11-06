@@ -1,61 +1,224 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Submit Complaint</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="container">
     {% include '_nav.html' %}
 
-    <h1>Submit a Complaint</h1>
+    <main id="main-content">
+        <header class="page-header">
+            <h1>Submit a Complaint</h1>
+            <p class="subtitle">Please provide accurate details so the administrative team can investigate and resolve your issue promptly.</p>
+        </header>
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+            <div class="error-banner" role="alert" aria-live="polite">
+                <p class="error">{{ error }}</p>
+            </div>
+        {% endif %}
 
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label>Complaint Title:</label>
-        <br>
-        <input
-            type="text"
-            name="title"
-            value="{{ request.form.get('title', '') }}"
-            required
-        >
+        <div id="client-error" class="error-banner" role="alert" aria-live="polite" style="display: none;">
+            <p class="error" id="client-error-text"></p>
+        </div>
 
-        <br><br>
+        <form method="POST" id="complaint-form" novalidate class="complaint-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label>Category:</label>
-        <br>
-        <select name="category" required>
-            <option value="">Choose a category</option>
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    Complaint Title <span class="required-indicator" aria-hidden="true">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-control"
+                    value="{{ request.form.get('title', '') }}"
+                    maxlength="200"
+                    minlength="5"
+                    required
+                    aria-required="true"
+                    aria-describedby="title-help title-counter"
+                    placeholder="Brief summary of the issue (e.g. WiFi connectivity issue in Block B)"
+                    autocomplete="off"
+                >
+                <div class="field-meta">
+                    <small id="title-help" class="form-help">Summarise your issue in 5 to 200 characters.</small>
+                    <span id="title-counter" class="char-counter" aria-live="polite">0 / 200</span>
+                </div>
+            </div>
 
-            {% for category in categories %}
-                <option value="{{ category }}"
-                    {% if request.form.get('category') == category %}selected{% endif %}>
-                    {{ category }}
-                </option>
-            {% endfor %}
-        </select>
+            <div class="form-group">
+                <label for="category" class="form-label">
+                    Category <span class="required-indicator" aria-hidden="true">*</span>
+                </label>
+                <select
+                    id="category"
+                    name="category"
+                    class="form-control"
+                    required
+                    aria-required="true"
+                    aria-describedby="category-help"
+                >
+                    <option value="" {% if not request.form.get('category') %}selected{% endif %} disabled>
+                        Choose a category
+                    </option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}"
+                            {% if request.form.get('category') == cat %}selected{% endif %}>
+                            {{ cat }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="field-meta">
+                    <small id="category-help" class="form-help">Select the relevant department or service category.</small>
+                </div>
+            </div>
 
-        <br><br>
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    Detailed Description <span class="required-indicator" aria-hidden="true">*</span>
+                </label>
+                <textarea
+                    id="description"
+                    name="description"
+                    class="form-control"
+                    rows="6"
+                    maxlength="2000"
+                    minlength="10"
+                    required
+                    aria-required="true"
+                    aria-describedby="description-help desc-counter"
+                    placeholder="Provide specific details including location, time observed, and any troubleshooting already attempted..."
+                >{{ request.form.get('description', '') }}</textarea>
+                <div class="field-meta">
+                    <small id="description-help" class="form-help">Include enough detail for resolution (10 to 2000 characters).</small>
+                    <span id="desc-counter" class="char-counter" aria-live="polite">0 / 2000</span>
+                </div>
+            </div>
 
-        <label>Description:</label>
-        <br>
-        <textarea
-            name="description"
-            required
-        >{{ request.form.get('description', '') }}</textarea>
-
-        <br><br>
-
-        <button type="submit">Submit Complaint</button>
-
-    </form>
-
+            <div class="form-actions">
+                <button type="submit" id="submit-btn" class="btn btn-primary">
+                    Submit Complaint
+                </button>
+                <a href="{{ url_for('complaints.dashboard') }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </main>
 </div>
+
+<script>
+(function() {
+    const form = document.getElementById('complaint-form');
+    const titleInput = document.getElementById('title');
+    const descInput = document.getElementById('description');
+    const catSelect = document.getElementById('category');
+    const titleCounter = document.getElementById('title-counter');
+    const descCounter = document.getElementById('desc-counter');
+    const clientError = document.getElementById('client-error');
+    const clientErrorText = document.getElementById('client-error-text');
+    const submitBtn = document.getElementById('submit-btn');
+
+    function updateCounter(input, counter, max) {
+        const len = input.value.length;
+        counter.textContent = len + ' / ' + max;
+        if (len > max * 0.9) {
+            counter.classList.add('char-limit-near');
+        } else {
+            counter.classList.remove('char-limit-near');
+        }
+    }
+
+    function showError(msg, targetInput) {
+        clientErrorText.textContent = msg;
+        clientError.style.display = 'block';
+        if (targetInput) {
+            targetInput.classList.add('is-invalid');
+            targetInput.focus();
+        }
+        clientError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearError() {
+        clientError.style.display = 'none';
+        clientErrorText.textContent = '';
+        titleInput.classList.remove('is-invalid');
+        descInput.classList.remove('is-invalid');
+        catSelect.classList.remove('is-invalid');
+    }
+
+    if (titleInput && titleCounter) {
+        updateCounter(titleInput, titleCounter, 200);
+        titleInput.addEventListener('input', function() {
+            clearError();
+            updateCounter(titleInput, titleCounter, 200);
+        });
+    }
+
+    if (descInput && descCounter) {
+        updateCounter(descInput, descCounter, 2000);
+        descInput.addEventListener('input', function() {
+            clearError();
+            updateCounter(descInput, descCounter, 2000);
+        });
+    }
+
+    if (catSelect) {
+        catSelect.addEventListener('change', clearError);
+    }
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            clearError();
+            const trimmedTitle = titleInput.value.trim();
+            const trimmedDesc = descInput.value.trim();
+            const chosenCategory = catSelect.value;
+
+            if (!trimmedTitle) {
+                e.preventDefault();
+                showError('Please enter a complaint title (cannot be blank or whitespace only).', titleInput);
+                return;
+            }
+
+            if (trimmedTitle.length < 5) {
+                e.preventDefault();
+                showError('Title must be at least 5 characters long.', titleInput);
+                return;
+            }
+
+            if (!chosenCategory) {
+                e.preventDefault();
+                showError('Please choose a category from the dropdown.', catSelect);
+                return;
+            }
+
+            if (!trimmedDesc) {
+                e.preventDefault();
+                showError('Please enter a detailed description (cannot be blank or whitespace only).', descInput);
+                return;
+            }
+
+            if (trimmedDesc.length < 10) {
+                e.preventDefault();
+                showError('Description must be at least 10 characters long.', descInput);
+                return;
+            }
+
+            // Disable submit button on submission to prevent double submission
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+            }
+        });
+    }
+})();
+</script>
 </body>
 </html>
