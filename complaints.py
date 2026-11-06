@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 from admin import STATUSES
 from extensions import db
-from models import Complaint, get_category_names
+from models import Complaint, ComplaintUpdate, get_category_names
 
 complaint_bp = Blueprint("complaints", __name__)
 
@@ -154,6 +154,11 @@ def dashboard():
 @complaint_bp.route("/complaints/<int:complaint_id>")
 def complaint_detail(complaint_id):
     if "user_id" not in session:
+        if (
+            request.args.get("format") == "json"
+            or request.accept_mimetypes.best == "application/json"
+        ):
+            return jsonify({"error": "Authentication required."}), 401
         return redirect(url_for("auth.login"))
 
     complaint = Complaint.query.filter_by(
@@ -161,7 +166,46 @@ def complaint_detail(complaint_id):
         user_id=session["user_id"]
     ).first_or_404()
 
+    updates = ComplaintUpdate.query.filter_by(
+        complaint_id=complaint.id
+    ).order_by(ComplaintUpdate.created_at.desc()).all()
+
+    if (
+        request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({
+            "id": complaint.id,
+            "title": complaint.title,
+            "description": complaint.description,
+            "category": complaint.category,
+            "status": complaint.status,
+            "resolution": complaint.resolution,
+            "created_at": (
+                complaint.created_at.isoformat()
+                if complaint.created_at else None
+            ),
+            "updated_at": (
+                complaint.updated_at.isoformat()
+                if complaint.updated_at else None
+            ),
+            "history": [
+                {
+                    "id": u.id,
+                    "old_status": u.old_status,
+                    "new_status": u.new_status,
+                    "note": u.note,
+                    "created_at": (
+                        u.created_at.isoformat()
+                        if u.created_at else None
+                    ),
+                }
+                for u in updates
+            ]
+        }), 200
+
     return render_template(
         "complaint_detail.html",
-        complaint=complaint
+        complaint=complaint,
+        updates=updates
     )
