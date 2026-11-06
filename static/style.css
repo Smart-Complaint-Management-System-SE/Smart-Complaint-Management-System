@@ -373,6 +373,76 @@ p.error, p.success {
   margin-top: 0;
 }
 
+/* Custom Error Page Styles (Issue #136) */
+.error-container {
+  max-width: 680px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 48px 32px;
+}
+.error-page-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.error-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 800;
+  color: #1d4ed8;
+  background: #eff6ff;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  border: 4px solid #dbeafe;
+}
+.error-badge-500 {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fee2e2;
+}
+.error-badge-403 {
+  color: #b45309;
+  background: #fffbeb;
+  border-color: #fef3c7;
+}
+.error-title {
+  font-size: 28px;
+  margin: 0 0 12px 0;
+  color: #0f172a;
+}
+.error-description {
+  font-size: 16px;
+  color: #475569;
+  max-width: 500px;
+  margin: 0 0 28px 0;
+  line-height: 1.6;
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.error-actions .btn {
+  margin-top: 0;
+}
+.error-footer-help {
+  font-size: 13px;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+  width: 100%;
+  max-width: 460px;
+}
+.error-footer-help p {
+  margin: 0;
+}
+
 @media (max-width: 600px) {
   .container {
     margin: 0;
@@ -395,5 +465,25 @@ p.error, p.success {
     width: 100%;
     box-sizing: border-box;
     text-align: center;
+  }
+  .error-container {
+    margin: 20px auto;
+    padding: 32px 16px;
+  }
+  .error-badge {
+    width: 90px;
+    height: 90px;
+    font-size: 42px;
+  }
+  .error-title {
+    font-size: 24px;
+  }
+  .error-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .error-actions .btn {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
