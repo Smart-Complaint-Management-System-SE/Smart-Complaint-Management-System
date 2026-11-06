@@ -1,3 +1,5 @@
 {% for message in get_flashed_messages() %}
-    <p class="success">{{ message }}</p>
+    <div class="alert alert-success" role="status" aria-live="polite">
+        <p class="success">{{ message }}</p>
+    </div>
 {% endfor %}

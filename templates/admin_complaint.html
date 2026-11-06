@@ -1,77 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Manage Complaint #{{ c.id }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Complaint #{{ c.id }} - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
 
-    <div class="topbar">
+    <header class="topbar">
         <a href="{{ url_for('admin.admin_dashboard') }}">&larr; Back to dashboard</a>
         {% include '_logout.html' %}
-    </div>
+    </header>
 
-    <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
-    <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
-    <p><strong>Category:</strong> {{ c.category }}</p>
-    <p><strong>Submitted:</strong> {{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}
-        | <strong>Last updated:</strong> {{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</p>
-    <p><strong>Current status:</strong>
-        <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
-    {% if history %}
-        <p><strong>Last updated by:</strong>
-            {{ admins.get(history[0].admin_id, 'Unknown') }}
-            on {{ history[0].created_at.strftime('%d-%m-%Y %H:%M') }}</p>
-    {% endif %}
-    <p><strong>Description:</strong></p>
-    <div class="box">{{ c.description }}</div>
+    <main id="main-content">
+        <h1>Complaint #{{ c.id }}: {{ c.title }}</h1>
+        <p><strong>Submitted by:</strong> {{ owner.name if owner else 'Unknown' }}</p>
+        <p><strong>Category:</strong> {{ c.category }}</p>
+        <p><strong>Submitted:</strong> {{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}
+            | <strong>Last updated:</strong> {{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</p>
+        <p><strong>Current status:</strong>
+            <span class="badge {{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></p>
+        {% if history %}
+            <p><strong>Last updated by:</strong>
+                {{ admins.get(history[0].admin_id, 'Unknown') }}
+                on {{ history[0].created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+        {% endif %}
+        <p><strong>Description:</strong></p>
+        <div class="box">{{ c.description }}</div>
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
-
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label>Status</label>
-        <select name="status">
-            {% for s in statuses %}
-                <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Resolution remarks (required when Resolved)</label>
-        <textarea name="resolution" rows="4">{{ c.resolution or '' }}</textarea>
-
-        {% if c.status == 'Resolved' %}
-            <label>Reason for reopening (required to move back to In Progress)</label>
-            <textarea name="reason" rows="2">{{ request.form.get('reason', '') }}</textarea>
+        {% if error %}
+            <div class="alert alert-error" role="alert" aria-live="polite">
+                <p class="error">{{ error }}</p>
+            </div>
         {% endif %}
 
-        <button type="submit">Update Complaint</button>
-    </form>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select name="status" id="status">
+                    {% for s in statuses %}
+                        <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <h2>History</h2>
-    {% if history %}
-        <table>
-            <tr>
-                <th>When</th>
-                <th>Admin</th>
-                <th>Change</th>
-                <th>Note</th>
-            </tr>
-            {% for h in history %}
-            <tr>
-                <td>{{ h.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                <td>{{ admins.get(h.admin_id, 'Unknown') }}</td>
-                <td>{{ h.old_status }} &rarr; {{ h.new_status }}</td>
-                <td>{{ h.note or '' }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No changes yet.</p>
-    {% endif %}
+            <div class="form-group">
+                <label for="resolution">Resolution remarks (required when Resolved)</label>
+                <textarea name="resolution" id="resolution" rows="4">{{ c.resolution or '' }}</textarea>
+            </div>
+
+            {% if c.status == 'Resolved' %}
+                <div class="form-group">
+                    <label for="reason">Reason for reopening (required to move back to In Progress)</label>
+                    <textarea name="reason" id="reason" rows="2">{{ request.form.get('reason', '') }}</textarea>
+                </div>
+            {% endif %}
+
+            <button type="submit">Update Complaint</button>
+        </form>
+
+        <h2>History</h2>
+        {% if history %}
+            <div class="table-responsive">
+                <table>
+                    <caption class="sr-only">Complaint audit history of status changes</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">When</th>
+                            <th scope="col">Admin</th>
+                            <th scope="col">Change</th>
+                            <th scope="col">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr>
+                            <td>{{ h.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td>{{ admins.get(h.admin_id, 'Unknown') }}</td>
+                            <td>{{ h.old_status }} &rarr; {{ h.new_status }}</td>
+                            <td>{{ h.note or '' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No changes yet.</p>
+        {% endif %}
+    </main>
 
 </div>
 </body>

@@ -1,28 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
-
     {% include '_nav.html' %}
 
-    <h1>Welcome, {{ name }}</h1>
+    <main id="main-content">
+        <header class="topbar">
+            <h1>Welcome, {{ name }}</h1>
+        </header>
 
-    <div class="cards">
-        {% for status, total in counts.items() %}
-            <div class="card">
-                <div class="num">{{ total }}</div>
-                <div>{{ status }}</div>
-            </div>
-        {% endfor %}
-    </div>
+        {% include '_messages.html' %}
 
-    <a class="btn" href="{{ url_for('complaints.complaint') }}">Submit complaint</a>
-    <a class="btn" href="{{ url_for('complaints.complaints') }}">My complaints</a>
+        <section class="cards" aria-label="Complaints summary by status">
+            {% for status, total in counts.items() %}
+                <div class="card" role="region" aria-label="{{ status }}: {{ total }} complaints">
+                    <div class="num">{{ total }}</div>
+                    <div>{{ status }}</div>
+                </div>
+            {% endfor %}
+        </section>
 
+        <div class="dashboard-actions">
+            <a class="btn" href="{{ url_for('complaints.complaint') }}">Submit complaint</a>
+            <a class="btn btn-secondary" href="{{ url_for('complaints.complaints') }}">My complaints</a>
+        </div>
+    </main>
 </div>
 </body>
 </html>
