@@ -1,40 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Register</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
+    <main id="main-content">
+        <h1>Smart Complaint Management System</h1>
+        <h2>Register</h2>
 
-    <h1>Smart Complaint Management System</h1>
+        <div class="alert-region" aria-live="polite">
+            {% if errors %}
+                <div class="alert alert-error" role="alert">
+                    {% for message in errors %}
+                        <p class="error"><strong>{{ message }}</strong></p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
 
-    <h2>Register</h2>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    {% for message in errors %}
-        <p class="error"><strong>{{ message }}</strong></p>
-    {% endfor %}
-    
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" value="{{ name }}" required autocomplete="name">
+            </div>
 
-        <label>Name:</label>
-        <input type="text" name="name" value="{{ name }}" required>
-        <br><br>
+            <div class="form-group">
+                <label for="email">Email address:</label>
+                <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="email">
+            </div>
 
-        <label>Email:</label>
-        <input type="email" name="email" value="{{ email }}" required>
-        <br><br>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+            </div>
 
-        <label>Password:</label>
-        <input type="password" name="password" required>
-        <br><br>
-
-        <button type="submit">Register</button>
-
-    </form>
-
+            <button type="submit">Register</button>
+        </form>
+    </main>
 </div>
 </body>
 </html>
