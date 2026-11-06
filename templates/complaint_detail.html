@@ -3,47 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complaint Details - Smart Complaint Management System</title>
+    <title>Complaint #{{ complaint.id }} Tracker - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
-<div class="container">
+<div class="container detail-container">
     {% include '_nav.html' %}
 
     <main id="main-content">
-        <header class="topbar">
-            <h1>Complaint Details</h1>
-        </header>
+        <div class="detail-header-nav">
+            <a href="{{ url_for('complaints.complaints') }}" class="back-link">&larr; Back to My Complaints</a>
+            <div class="live-status-controls">
+                <span class="live-indicator" id="live-indicator" aria-live="polite">
+                    <span class="pulse-dot"></span> Live Tracking
+                </span>
+                <button type="button" id="refresh-tracker-btn" class="btn btn-secondary btn-sm" aria-label="Refresh complaint status">
+                    <span id="refresh-icon">🔄</span> <span id="refresh-btn-text">Refresh</span>
+                </button>
+            </div>
+        </div>
 
-        <div class="complaint-detail-card box">
-            <p><strong>Title:</strong> {{ complaint.title }}</p>
-            <p><strong>Description:</strong> {{ complaint.description }}</p>
-            <p><strong>Category:</strong> {{ complaint.category }}</p>
-            <p>
-                <strong>Status:</strong>
-                <span class="badge {{ complaint.status|lower|replace(' ', '-') }}">
+        <div id="tracker-alert" class="alert-box" role="status" aria-live="polite" style="display: none;"></div>
+
+        <header class="complaint-summary-card">
+            <div class="summary-top">
+                <span class="complaint-id-tag">Complaint #{{ complaint.id }}</span>
+                <span class="category-tag">{{ complaint.category }}</span>
+                <span id="current-status-badge" class="badge {{ complaint.status|lower|replace(' ', '-') }}">
                     {{ complaint.status }}
                 </span>
-            </p>
+            </div>
+            <h1 class="complaint-title" id="complaint-title">{{ complaint.title }}</h1>
+            <p class="complaint-description" id="complaint-description">{{ complaint.description }}</p>
+            <div class="summary-meta">
+                <span><strong>Submitted:</strong> {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.created_at else '-' }}</span>
+                <span class="meta-divider">•</span>
+                <span><strong>Last Updated:</strong> <span id="last-updated-val">{{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.updated_at else '-' }}</span></span>
+            </div>
+        </header>
 
-            {% if complaint.resolution %}
-                <div class="alert alert-success" role="region" aria-label="Official Resolution">
-                    <p><strong>Resolution:</strong> {{ complaint.resolution }}</p>
+        <!-- Complaint Tracking Timeline Component -->
+        <section class="tracker-section" aria-label="Complaint progress tracker">
+            <h2 class="section-title">Status Timeline</h2>
+            <div class="timeline-container">
+                <div class="timeline" id="tracking-timeline">
+                    <!-- Step 1: Submitted -->
+                    <div class="timeline-step {% if complaint.status in ['Pending', 'In Progress', 'Resolved'] %}step-completed{% endif %}" id="step-submitted">
+                        <div class="step-marker">
+                            <span class="marker-circle">✓</span>
+                        </div>
+                        <div class="step-body">
+                            <h3 class="step-title">1. Submitted</h3>
+                            <p class="step-desc">Complaint received and logged in system.</p>
+                            <span class="step-time">{{ complaint.created_at.strftime('%d-%m-%Y %H:%M') if complaint.created_at else '' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: In Progress -->
+                    <div class="timeline-step {% if complaint.status in ['In Progress', 'Resolved'] %}step-completed{% elif complaint.status == 'In Progress' %}step-active{% else %}step-upcoming{% endif %}" id="step-in-progress">
+                        <div class="step-marker">
+                            <span class="marker-circle">{% if complaint.status in ['In Progress', 'Resolved'] %}✓{% else %}2{% endif %}</span>
+                        </div>
+                        <div class="step-body">
+                            <h3 class="step-title">2. In Progress</h3>
+                            <p class="step-desc">Under investigation by the administrative team.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Resolved -->
+                    <div class="timeline-step {% if complaint.status == 'Resolved' %}step-completed step-final{% else %}step-upcoming{% endif %}" id="step-resolved">
+                        <div class="step-marker">
+                            <span class="marker-circle">{% if complaint.status == 'Resolved' %}✓{% else %}3{% endif %}</span>
+                        </div>
+                        <div class="step-body">
+                            <h3 class="step-title">3. Resolved</h3>
+                            <p class="step-desc">Resolution provided and case concluded.</p>
+                        </div>
+                    </div>
                 </div>
-            {% endif %}
+            </div>
+        </section>
 
-            <p><strong>Created:</strong>
-                {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.created_at else '-' }}
-            </p>
+        <!-- Resolution Box (Visible when resolved or resolution exists) -->
+        <section class="resolution-card" id="resolution-box" role="region" aria-label="Official Resolution" style="{% if not complaint.resolution %}display: none;{% endif %}">
+            <div class="resolution-header">
+                <span class="resolution-icon">📋</span>
+                <h2>Official Resolution Remarks</h2>
+            </div>
+            <p id="resolution-text" class="resolution-text">{{ complaint.resolution or '' }}</p>
+        </section>
 
-            <p><strong>Last Updated:</strong>
-                {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.updated_at else '-' }}
-            </p>
+        <!-- Status Change History Log -->
+        <section class="history-section" aria-label="Status change history">
+            <h2 class="section-title">Status History & Updates</h2>
+            <div class="table-responsive">
+                <table class="data-table" id="history-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date & Time</th>
+                            <th scope="col">Status Transition</th>
+                            <th scope="col">Remarks / Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        {% for u in updates %}
+                        <tr>
+                            <td class="cell-date">{{ u.created_at.strftime('%d-%m-%Y %H:%M:%S') if u.created_at else '-' }}</td>
+                            <td>
+                                <span class="badge {{ (u.old_status or 'New')|lower|replace(' ', '-') }}">
+                                    {{ u.old_status or 'Submitted' }}
+                                </span>
+                                &rarr;
+                                <span class="badge {{ u.new_status|lower|replace(' ', '-') }}">
+                                    {{ u.new_status }}
+                                </span>
+                            </td>
+                            <td>{{ u.note or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr id="no-history-row">
+                            <td colspan="3" class="text-muted">No status transitions recorded yet. Complaint is currently awaiting review.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-            <a class="btn btn-secondary" href="{{ url_for('complaints.complaints') }}">Back to My Complaints</a>
-        </div>
     </main>
 </div>
+
+<script>
+(function() {
+    const complaintId = {{ complaint.id }};
+    const refreshBtn = document.getElementById('refresh-tracker-btn');
+    const refreshIcon = document.getElementById('refresh-icon');
+    const refreshBtnText = document.getElementById('refresh-btn-text');
+    const trackerAlert = document.getElementById('tracker-alert');
+    const statusBadge = document.getElementById('current-status-badge');
+    const lastUpdatedVal = document.getElementById('last-updated-val');
+    const resolutionBox = document.getElementById('resolution-box');
+    const resolutionText = document.getElementById('resolution-text');
+    const historyBody = document.getElementById('history-body');
+
+    const stepSubmitted = document.getElementById('step-submitted');
+    const stepInProgress = document.getElementById('step-in-progress');
+    const stepResolved = document.getElementById('step-resolved');
+
+    let isPolling = false;
+
+    function showAlert(msg, isError) {
+        trackerAlert.textContent = msg;
+        trackerAlert.className = isError ? 'alert-box alert-error' : 'alert-box alert-success';
+        trackerAlert.style.display = 'block';
+        setTimeout(function() {
+            trackerAlert.style.display = 'none';
+        }, 4000);
+    }
+
+    function updateTimeline(status) {
+        // Reset classes
+        stepSubmitted.className = 'timeline-step step-completed';
+        stepInProgress.className = 'timeline-step';
+        stepResolved.className = 'timeline-step';
+
+        const inProgMarker = stepInProgress.querySelector('.marker-circle');
+        const resolvedMarker = stepResolved.querySelector('.marker-circle');
+
+        if (status === 'Pending') {
+            stepInProgress.classList.add('step-upcoming');
+            stepResolved.classList.add('step-upcoming');
+            inProgMarker.textContent = '2';
+            resolvedMarker.textContent = '3';
+        } else if (status === 'In Progress') {
+            stepInProgress.classList.add('step-active');
+            stepResolved.classList.add('step-upcoming');
+            inProgMarker.textContent = '2';
+            resolvedMarker.textContent = '3';
+        } else if (status === 'Resolved') {
+            stepInProgress.classList.add('step-completed');
+            stepResolved.classList.add('step-completed', 'step-final');
+            inProgMarker.textContent = '✓';
+            resolvedMarker.textContent = '✓';
+        }
+
+        // Update badge
+        statusBadge.textContent = status;
+        statusBadge.className = 'badge ' + status.toLowerCase().replace(' ', '-');
+    }
+
+    function updateHistory(historyList) {
+        if (!historyList || historyList.length === 0) {
+            historyBody.innerHTML = '<tr id="no-history-row"><td colspan="3" class="text-muted">No status transitions recorded yet. Complaint is currently awaiting review.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        historyList.forEach(function(u) {
+            const dateStr = u.created_at ? u.created_at.replace('T', ' ').substring(0, 19) : '-';
+            const oldStatus = u.old_status || 'Submitted';
+            const oldClass = oldStatus.toLowerCase().replace(' ', '-');
+            const newClass = u.new_status.toLowerCase().replace(' ', '-');
+            const note = u.note || '-';
+
+            html += '<tr>' +
+                '<td class="cell-date">' + dateStr + '</td>' +
+                '<td><span class="badge ' + oldClass + '">' + oldStatus + '</span> &rarr; <span class="badge ' + newClass + '">' + u.new_status + '</span></td>' +
+                '<td>' + note + '</td>' +
+                '</tr>';
+        });
+        historyBody.innerHTML = html;
+    }
+
+    function fetchStatus(manual) {
+        if (isPolling) return;
+        isPolling = true;
+
+        if (manual) {
+            refreshBtnText.textContent = 'Checking...';
+            refreshIcon.classList.add('spinning');
+        }
+
+        fetch('/complaints/' + complaintId + '?format=json', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('Status HTTP ' + res.status);
+            return res.json();
+        })
+        .then(function(data) {
+            updateTimeline(data.status);
+
+            if (data.updated_at) {
+                lastUpdatedVal.textContent = data.updated_at.replace('T', ' ').substring(0, 19);
+            }
+
+            if (data.resolution) {
+                resolutionText.textContent = data.resolution;
+                resolutionBox.style.display = 'block';
+            } else {
+                resolutionBox.style.display = 'none';
+            }
+
+            if (data.history) {
+                updateHistory(data.history);
+            }
+
+            if (manual) {
+                showAlert('Status verified up to date.', false);
+            }
+        })
+        .catch(function(err) {
+            if (manual) {
+                showAlert('Unable to fetch live status: ' + err.message, true);
+            }
+        })
+        .finally(function() {
+            isPolling = false;
+            if (manual) {
+                refreshBtnText.textContent = 'Refresh';
+                refreshIcon.classList.remove('spinning');
+            }
+        });
+    }
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            fetchStatus(true);
+        });
+    }
+
+    // Auto-poll status every 10 seconds for real-time tracking
+    const pollInterval = setInterval(function() {
+        fetchStatus(false);
+    }, 10000);
+
+    window.addEventListener('beforeunload', function() {
+        clearInterval(pollInterval);
+    });
+})();
+</script>
 </body>
 </html>
