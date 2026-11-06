@@ -1,123 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
 
-    <div class="topbar">
+    <header class="topbar">
         <h1>Admin Dashboard</h1>
         <span>
-            Logged in as {{ session['user_name'] }} |
+            Logged in as <strong>{{ session['user_name'] }}</strong> |
             {% include '_logout.html' %}
         </span>
-    </div>
+    </header>
 
-    <div class="cards">
-        {% for s in statuses %}
-            <div class="card">
-                <div class="num">{{ counts[s] }}</div>
-                <div>{{ s }}</div>
+    <main id="main-content">
+        <section class="cards" aria-label="Complaints summary by status">
+            {% for s in statuses %}
+                <div class="card" role="region" aria-label="{{ s }}: {{ counts[s] }} complaints">
+                    <div class="num">{{ counts[s] }}</div>
+                    <div>{{ s }}</div>
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- Filters -->
+        <section class="filters" aria-label="Complaint filters">
+            <form method="GET" action="{{ url_for('admin.admin_dashboard') }}">
+
+                <label for="status">Status:</label>
+                <select name="status" id="status">
+                    <option value="">All Statuses</option>
+                    {% for s in statuses %}
+                        <option value="{{ s }}"
+                            {% if selected == s %}selected{% endif %}>
+                            {{ s }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="category">Category:</label>
+                <select name="category" id="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category }}"
+                            {% if selected_category == category %}selected{% endif %}>
+                            {{ category }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="sort">Sort:</label>
+                <select name="sort" id="sort">
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+                    <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+                </select>
+
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="{{ url_for('admin.admin_dashboard') }}">Clear</a>
+
+            </form>
+        </section>
+
+        <!-- Complaints Table -->
+        <section class="table-section" aria-label="Complaints table">
+            <div class="table-responsive">
+                <table>
+                    <caption class="sr-only">List of all complaints with status and management actions</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Submitted by</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Submitted</th>
+                            <th scope="col">Last updated</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in complaints %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.title }}</td>
+                            <td>{{ c.category }}</td>
+                            <td>{{ users.get(c.user_id, 'Unknown') }}</td>
+                            <td>
+                                <span class="badge {{ c.status|lower|replace(' ', '-') }}">
+                                    {{ c.status }}
+                                </span>
+                            </td>
+                            <td>{{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}</td>
+                            <td>{{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</td>
+                            <td>
+                                <a class="btn btn-sm"
+                                   href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}"
+                                   aria-label="Manage complaint #{{ c.id }}: {{ c.title }}">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8">No complaints found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        {% endfor %}
-    </div>
-
-    <!-- Filters -->
-    <div class="filters">
-        <form method="GET" action="{{ url_for('admin.admin_dashboard') }}">
-
-            <label for="status">Status:</label>
-
-            <select name="status" id="status">
-                <option value="">All Statuses</option>
-
-                {% for s in statuses %}
-                    <option value="{{ s }}"
-                        {% if selected == s %}selected{% endif %}>
-                        {{ s }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <label for="category">Category:</label>
-
-            <select name="category" id="category">
-                <option value="">All Categories</option>
-
-                {% for category in categories %}
-                    <option value="{{ category }}"
-                        {% if selected_category == category %}selected{% endif %}>
-                        {{ category }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <label for="sort">Sort:</label>
-
-            <select name="sort" id="sort">
-                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
-                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
-            </select>
-
-            <button type="submit">Apply Filters</button>
-
-            <a href="{{ url_for('admin.admin_dashboard') }}">Clear</a>
-
-        </form>
-    </div>
-
-    <!-- Complaints Table -->
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Category</th>
-            <th>Submitted by</th>
-            <th>Status</th>
-            <th>Submitted</th>
-            <th>Last updated</th>
-            <th>Action</th>
-        </tr>
-
-        {% for c in complaints %}
-        <tr>
-            <td>{{ c.id }}</td>
-
-            <td>{{ c.title }}</td>
-
-            <td>{{ c.category }}</td>
-
-            <td>{{ users.get(c.user_id, 'Unknown') }}</td>
-
-            <td>
-                <span class="badge {{ c.status|lower|replace(' ', '-') }}">
-                    {{ c.status }}
-                </span>
-            </td>
-
-            <td>{{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}</td>
-
-            <td>{{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</td>
-
-            <td>
-                <a class="btn"
-                   href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}">
-                    Manage
-                </a>
-            </td>
-        </tr>
-
-        {% else %}
-
-        <tr>
-            <td colspan="8">No complaints found.</td>
-        </tr>
-
-        {% endfor %}
-    </table>
+        </section>
+    </main>
 
 </div>
 </body>

@@ -1,22 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
+    <main id="main-content">
+        <h1>Smart Complaint Management System</h1>
+        <p>Submit complaints and track their progress.</p>
 
-    <h1>Smart Complaint Management System</h1>
-    <p>Submit complaints and track their progress.</p>
-
-    {% if logged_in %}
-        <a class="btn" href="{{ url_for('complaints.dashboard') }}">Dashboard</a>
-    {% else %}
-        <a class="btn" href="{{ url_for('auth.login') }}">Login</a>
-        <a class="btn" href="{{ url_for('auth.register') }}">Register</a>
-    {% endif %}
-
+        <div class="home-actions">
+            {% if logged_in %}
+                <a class="btn" href="{{ url_for('complaints.dashboard') }}">Dashboard</a>
+            {% else %}
+                <a class="btn" href="{{ url_for('auth.login') }}">Login</a>
+                <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </div>
+    </main>
 </div>
 </body>
 </html>
