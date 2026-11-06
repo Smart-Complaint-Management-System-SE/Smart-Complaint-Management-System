@@ -174,6 +174,22 @@ def admin_dashboard():
 
     if sort == "oldest":
         query = query.order_by(Complaint.created_at.asc(), Complaint.id.asc())
+    elif sort == "id_asc":
+        query = query.order_by(Complaint.id.asc())
+    elif sort == "id_desc":
+        query = query.order_by(Complaint.id.desc())
+    elif sort == "title_asc":
+        query = query.order_by(Complaint.title.asc(), Complaint.id.asc())
+    elif sort == "title_desc":
+        query = query.order_by(Complaint.title.desc(), Complaint.id.desc())
+    elif sort == "category_asc":
+        query = query.order_by(Complaint.category.asc(), Complaint.id.asc())
+    elif sort == "category_desc":
+        query = query.order_by(Complaint.category.desc(), Complaint.id.desc())
+    elif sort == "status_asc":
+        query = query.order_by(Complaint.status.asc(), Complaint.id.asc())
+    elif sort == "status_desc":
+        query = query.order_by(Complaint.status.desc(), Complaint.id.desc())
     else:
         sort = "newest"
         query = query.order_by(Complaint.created_at.desc(), Complaint.id.desc())
@@ -189,12 +205,14 @@ def admin_dashboard():
         s: Complaint.query.filter_by(status=s).count()
         for s in STATUSES
     }
+    total_complaints = Complaint.query.count()
 
     return render_template(
         "admin_dashboard.html",
         complaints=all_complaints,
         users=users,
         counts=counts,
+        total_complaints=total_complaints,
         statuses=STATUSES,
         categories=categories,
         selected=status,

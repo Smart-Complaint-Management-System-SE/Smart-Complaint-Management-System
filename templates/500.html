@@ -8,11 +8,23 @@
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
-<div class="container">
-    <main id="main-content">
-        <h1>500 - Internal Server Error</h1>
-        <p>Something went wrong on our side. Please try again later.</p>
-        <a class="btn" href="{{ url_for('home') }}">Go to Home</a>
+<div class="container error-container">
+    <main id="main-content" class="error-page-content">
+        <div class="error-badge error-badge-500">500</div>
+        <h1 class="error-title">Internal Server Error</h1>
+        <p class="error-description">
+            Something unexpected went wrong on our servers while processing your request. Any pending database changes have been safely rolled back.
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Return to Home</a>
+            <a href="{{ url_for('complaints.dashboard') }}" class="btn btn-secondary">Go to Dashboard</a>
+            <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Try Again</button>
+        </div>
+
+        <div class="error-footer-help">
+            <p>Our administrative and engineering team has been automatically alerted. Please try again in a few moments.</p>
+        </div>
     </main>
 </div>
 </body>
