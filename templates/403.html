@@ -1,14 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Access Denied</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Access Denied - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="container">
-    <h1>403 – Access Denied</h1>
-    <p>You do not have permission to view this page.</p>
-    <a href="{{ url_for('auth.login') }}">Go to login</a>
+<div class="container error-container">
+    <main id="main-content" class="error-page-content">
+        <div class="error-badge error-badge-403">403</div>
+        <h1 class="error-title">Access Denied</h1>
+        <p class="error-description">
+            You do not have permission to view or manage this resource. Please make sure you are logged in with the appropriate account privileges.
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Go to Login</a>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary">Go to Home</a>
+        </div>
+    </main>
 </div>
 </body>
 </html>

@@ -3,7 +3,7 @@ import os
 import secrets
 from datetime import timedelta
 
-from flask import Flask, render_template, request, session, abort
+from flask import Flask, render_template, request, session, abort, jsonify
 
 from extensions import db
 from models import User, Complaint, normalize_categories
@@ -148,11 +148,23 @@ def forbidden(e):
         request.path,
         session.get("user_id")
     )
+    if (
+        request.path.startswith("/api")
+        or request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({"error": "Access forbidden."}), 403
     return render_template("403.html"), 403
 
 
 @app.errorhandler(404)
 def page_not_found(e):
+    if (
+        request.path.startswith("/api")
+        or request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({"error": "Resource not found."}), 404
     return render_template("404.html"), 404
 
 
@@ -168,6 +180,12 @@ def internal_server_error(e):
         request.path,
         e
     )
+    if (
+        request.path.startswith("/api")
+        or request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({"error": "Internal server error."}), 500
     return render_template("500.html"), 500
 
 

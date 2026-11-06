@@ -1,15 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Page Not Found</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Page Not Found - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="container">
-    <h1>404 - Page Not Found</h1>
-    <p>Sorry, the page you are looking for does not exist.</p>
-    <a href="{{ url_for('home') }}">Go to Home</a>
+<div class="container error-container">
+    <main id="main-content" class="error-page-content">
+        <div class="error-badge">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-description">
+            Sorry, we could not find the page you requested. It might have been moved, renamed, or is temporarily unavailable.
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Go to Home</a>
+            <a href="{{ url_for('complaints.dashboard') }}" class="btn btn-secondary">Go to Dashboard</a>
+            <a href="{{ url_for('complaints.complaint') }}" class="btn btn-secondary">Submit a Complaint</a>
+        </div>
+
+        <div class="error-footer-help">
+            <p>If you believe this is an error with the system, please contact your campus IT administrator.</p>
+        </div>
+    </main>
 </div>
 </body>
 </html>
