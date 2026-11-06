@@ -1,85 +1,105 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Complaints</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Complaints - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
     {% include '_nav.html' %}
 
-    <h1>My Complaints</h1>
-    {% include '_messages.html' %}
+    <main id="main-content">
+        <header class="topbar">
+            <h1>My Complaints</h1>
+        </header>
 
-    {% if complaints %}
-        {% for complaint in complaints %}
-            <div>
-                <h2>{{ complaint.title }}</h2>
+        {% include '_messages.html' %}
 
-                <a href="{{ url_for('complaints.complaint_detail', complaint_id=complaint.id) }}">
-                    View Details
-                </a>
+        {% if complaints %}
+            <div class="complaints-list" role="feed" aria-label="Your submitted complaints">
+                {% for complaint in complaints %}
+                    <article class="complaint-card box" aria-labelledby="complaint-title-{{ complaint.id }}">
+                        <h2 id="complaint-title-{{ complaint.id }}">{{ complaint.title }}</h2>
 
-                <p>{{ complaint.description }}</p>
+                        <p>{{ complaint.description }}</p>
 
-                <p>
-                    <strong>Status:</strong> {{ complaint.status }}
-                </p>
+                        <p>
+                            <strong>Status:</strong>
+                            <span class="badge {{ complaint.status|lower|replace(' ', '-') }}">
+                                {{ complaint.status }}
+                            </span>
+                        </p>
 
-                <p>
-                    <strong>Created:</strong>
-                    {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') }}
-                </p>
+                        <p>
+                            <strong>Category:</strong> {{ complaint.category }}
+                        </p>
 
-                <p>
-                    <strong>Last Updated:</strong>
-                    {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') }}
-                </p>
+                        <p>
+                            <strong>Created:</strong>
+                            {{ complaint.created_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.created_at else '-' }}
+                        </p>
 
-                {% if complaint.resolution %}
-                    <p>
-                        <strong>Resolution:</strong>
-                        {{ complaint.resolution }}
-                    </p>
+                        <p>
+                            <strong>Last Updated:</strong>
+                            {{ complaint.updated_at.strftime('%d-%m-%Y %H:%M:%S') if complaint.updated_at else '-' }}
+                        </p>
+
+                        {% if complaint.resolution %}
+                            <div class="resolution-card">
+                                <strong>Resolution:</strong>
+                                <p>{{ complaint.resolution }}</p>
+                            </div>
+                        {% endif %}
+
+                        <a href="{{ url_for('complaints.complaint_detail', complaint_id=complaint.id) }}"
+                           class="btn btn-secondary btn-sm"
+                           aria-label="View details for complaint: {{ complaint.title }}">
+                            View Details
+                        </a>
+                        <hr>
+                    </article>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination controls -->
+            <nav class="pagination" aria-label="Complaints pagination">
+                {% if pagination.has_prev %}
+                    <a href="{{ url_for(
+                        'complaints.complaints',
+                        page=pagination.prev_num,
+                        per_page=per_page
+                    ) }}" aria-label="Go to previous page">
+                        &laquo; Previous
+                    </a>
+                {% else %}
+                    <span></span>
                 {% endif %}
 
-                <hr>
-            </div>
-        {% endfor %}
+                <span aria-current="page">
+                    Page {{ pagination.page }} of {{ pagination.pages }}
+                    ({{ pagination.total }} complaints)
+                </span>
 
-        <!-- Pagination controls -->
-        <div class="pagination">
-            {% if pagination.has_prev %}
-                <a href="{{ url_for(
-                    'complaints.complaints',
-                    page=pagination.prev_num,
-                    per_page=per_page
-                ) }}">
-                    &laquo; Previous
-                </a>
-            {% endif %}
+                {% if pagination.has_next %}
+                    <a href="{{ url_for(
+                        'complaints.complaints',
+                        page=pagination.next_num,
+                        per_page=per_page
+                    ) }}" aria-label="Go to next page">
+                        Next &raquo;
+                    </a>
+                {% else %}
+                    <span></span>
+                {% endif %}
+            </nav>
 
-            <span>
-                Page {{ pagination.page }} of {{ pagination.pages }}
-                ({{ pagination.total }} complaints)
-            </span>
-
-            {% if pagination.has_next %}
-                <a href="{{ url_for(
-                    'complaints.complaints',
-                    page=pagination.next_num,
-                    per_page=per_page
-                ) }}">
-                    Next &raquo;
-                </a>
-            {% endif %}
-        </div>
-
-    {% else %}
-        <p>You have not submitted any complaints.</p>
-    {% endif %}
+        {% else %}
+            <p>You have not submitted any complaints.</p>
+        {% endif %}
+    </main>
 </div>
 </body>
 </html>

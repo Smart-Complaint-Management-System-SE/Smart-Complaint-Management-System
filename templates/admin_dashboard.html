@@ -8,6 +8,7 @@
 </head>
 
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container admin-container">
 
     <header class="topbar">
@@ -19,148 +20,152 @@
         </div>
     </header>
 
-    <!-- Overview Status Cards -->
-    <section class="cards" aria-label="Complaint status overview">
-        {% for s in statuses %}
-            <div class="card card-{{ s|lower|replace(' ', '-') }}">
-                <div class="num">{{ counts[s] }}</div>
-                <div class="card-label">{{ s }}</div>
-            </div>
-        {% endfor %}
-    </section>
+    <main id="main-content">
+        <!-- Overview Status Cards -->
+        <section class="cards" aria-label="Complaint status overview">
+            {% for s in statuses %}
+                <div class="card card-{{ s|lower|replace(' ', '-') }}">
+                    <div class="num">{{ counts[s] }}</div>
+                    <div class="card-label">{{ s }}</div>
+                </div>
+            {% endfor %}
+        </section>
 
-    <!-- Filters Section with Status Chips & Dropdowns -->
-    <section class="filter-panel" aria-label="Filters and search">
-        <div class="status-chips-wrapper">
-            <span class="filter-heading">Status Filter:</span>
-            <nav class="status-chips" aria-label="Filter complaints by status">
-                <a href="{{ url_for('admin.admin_dashboard', category=selected_category, sort=sort) }}"
-                   class="chip {% if not selected %}active{% endif %}"
-                   aria-pressed="{% if not selected %}true{% else %}false{% endif %}">
-                    All <span class="chip-count">({{ total_complaints }})</span>
-                </a>
-                {% for s in statuses %}
-                    <a href="{{ url_for('admin.admin_dashboard', status=s, category=selected_category, sort=sort) }}"
-                       class="chip chip-{{ s|lower|replace(' ', '-') }} {% if selected == s %}active{% endif %}"
-                       aria-pressed="{% if selected == s %}true{% else %}false{% endif %}">
-                        {{ s }} <span class="chip-count">({{ counts[s] }})</span>
+        <!-- Filters Section with Status Chips & Dropdowns -->
+        <section class="filter-panel" aria-label="Filters and search">
+            <div class="status-chips-wrapper">
+                <span class="filter-heading">Status Filter:</span>
+                <nav class="status-chips" aria-label="Filter complaints by status">
+                    <a href="{{ url_for('admin.admin_dashboard', category=selected_category, sort=sort) }}"
+                       class="chip {% if not selected %}active{% endif %}"
+                       aria-pressed="{% if not selected %}true{% else %}false{% endif %}">
+                        All <span class="chip-count">({{ total_complaints }})</span>
                     </a>
-                {% endfor %}
-            </nav>
-        </div>
-
-        <form method="GET" action="{{ url_for('admin.admin_dashboard') }}" class="filters-form">
-            {% if selected %}
-                <input type="hidden" name="status" value="{{ selected }}">
-            {% endif %}
-
-            <div class="filter-controls-row">
-                <div class="form-group-inline">
-                    <label for="category">Category:</label>
-                    <select name="category" id="category" class="filter-select">
-                        <option value="">All Categories</option>
-                        {% for category in categories %}
-                            <option value="{{ category }}"
-                                {% if selected_category == category %}selected{% endif %}>
-                                {{ category }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group-inline">
-                    <label for="sort">Sort:</label>
-                    <select name="sort" id="sort" class="filter-select">
-                        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
-                        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
-                        <option value="id_asc" {% if sort == 'id_asc' %}selected{% endif %}>ID (Ascending)</option>
-                        <option value="id_desc" {% if sort == 'id_desc' %}selected{% endif %}>ID (Descending)</option>
-                        <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
-                        <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
-                    </select>
-                </div>
-
-                <div class="filter-buttons">
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Clear</a>
-                </div>
-            </div>
-        </form>
-    </section>
-
-    <!-- Complaints Management Table -->
-    <section class="table-section" aria-label="Complaints list">
-        <div class="table-responsive">
-            <table id="complaints-table" class="data-table">
-                <thead>
-                    <tr>
-                        <th scope="col" class="sortable-th" data-column="id">
-                            <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='id_desc' if sort == 'id_asc' else 'id_asc') }}" class="th-sort-link">
-                                ID <span class="sort-icon">{% if sort == 'id_asc' %}▲{% elif sort == 'id_desc' %}▼{% else %}⇅{% endif %}</span>
-                            </a>
-                        </th>
-                        <th scope="col" class="sortable-th" data-column="title">
-                            <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='title_desc' if sort == 'title_asc' else 'title_asc') }}" class="th-sort-link">
-                                Title <span class="sort-icon">{% if sort == 'title_asc' %}▲{% elif sort == 'title_desc' %}▼{% else %}⇅{% endif %}</span>
-                            </a>
-                        </th>
-                        <th scope="col" class="sortable-th" data-column="category">
-                            <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='category_desc' if sort == 'category_asc' else 'category_asc') }}" class="th-sort-link">
-                                Category <span class="sort-icon">{% if sort == 'category_asc' %}▲{% elif sort == 'category_desc' %}▼{% else %}⇅{% endif %}</span>
-                            </a>
-                        </th>
-                        <th scope="col">Submitted by</th>
-                        <th scope="col" class="sortable-th" data-column="status">
-                            <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='status_desc' if sort == 'status_asc' else 'status_asc') }}" class="th-sort-link">
-                                Status <span class="sort-icon">{% if sort == 'status_asc' %}▲{% elif sort == 'status_desc' %}▼{% else %}⇅{% endif %}</span>
-                            </a>
-                        </th>
-                        <th scope="col" class="sortable-th" data-column="submitted">
-                            <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='oldest' if sort == 'newest' else 'newest') }}" class="th-sort-link">
-                                Submitted <span class="sort-icon">{% if sort == 'newest' %}▼{% elif sort == 'oldest' %}▲{% else %}⇅{% endif %}</span>
-                            </a>
-                        </th>
-                        <th scope="col">Last updated</th>
-                        <th scope="col">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for c in complaints %}
-                    <tr>
-                        <td class="cell-id">#{{ c.id }}</td>
-                        <td class="cell-title font-medium">{{ c.title }}</td>
-                        <td class="cell-category">{{ c.category }}</td>
-                        <td class="cell-user">{{ users.get(c.user_id, 'Unknown') }}</td>
-                        <td class="cell-status">
-                            <span class="badge {{ c.status|lower|replace(' ', '-') }}">
-                                {{ c.status }}
-                            </span>
-                        </td>
-                        <td class="cell-date">{{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}</td>
-                        <td class="cell-date">{{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</td>
-                        <td class="cell-action">
-                            <a class="btn btn-sm"
-                               href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}">
-                                Manage
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr class="empty-row">
-                        <td colspan="8">
-                            <div class="empty-state">
-                                <p>No complaints found matching the criteria.</p>
-                                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">
-                                    Clear Filters
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
+                    {% for s in statuses %}
+                        <a href="{{ url_for('admin.admin_dashboard', status=s, category=selected_category, sort=sort) }}"
+                           class="chip chip-{{ s|lower|replace(' ', '-') }} {% if selected == s %}active{% endif %}"
+                           aria-pressed="{% if selected == s %}true{% else %}false{% endif %}">
+                            {{ s }} <span class="chip-count">({{ counts[s] }})</span>
+                        </a>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+                </nav>
+            </div>
+
+            <form method="GET" action="{{ url_for('admin.admin_dashboard') }}" class="filters-form">
+                {% if selected %}
+                    <input type="hidden" name="status" value="{{ selected }}">
+                {% endif %}
+
+                <div class="filter-controls-row">
+                    <div class="form-group-inline">
+                        <label for="category">Category:</label>
+                        <select name="category" id="category" class="filter-select">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category }}"
+                                    {% if selected_category == category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-inline">
+                        <label for="sort">Sort:</label>
+                        <select name="sort" id="sort" class="filter-select">
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+                            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+                            <option value="id_asc" {% if sort == 'id_asc' %}selected{% endif %}>ID (Ascending)</option>
+                            <option value="id_desc" {% if sort == 'id_desc' %}selected{% endif %}>ID (Descending)</option>
+                            <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
+                            <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Complaints Management Table -->
+        <section class="table-section" aria-label="Complaints table">
+            <div class="table-responsive">
+                <table id="complaints-table" class="data-table">
+                    <caption class="sr-only">List of all complaints with status and management actions</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" class="sortable-th" data-column="id">
+                                <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='id_desc' if sort == 'id_asc' else 'id_asc') }}" class="th-sort-link">
+                                    ID <span class="sort-icon">{% if sort == 'id_asc' %}▲{% elif sort == 'id_desc' %}▼{% else %}⇅{% endif %}</span>
+                                </a>
+                            </th>
+                            <th scope="col" class="sortable-th" data-column="title">
+                                <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='title_desc' if sort == 'title_asc' else 'title_asc') }}" class="th-sort-link">
+                                    Title <span class="sort-icon">{% if sort == 'title_asc' %}▲{% elif sort == 'title_desc' %}▼{% else %}⇅{% endif %}</span>
+                                </a>
+                            </th>
+                            <th scope="col" class="sortable-th" data-column="category">
+                                <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='category_desc' if sort == 'category_asc' else 'category_asc') }}" class="th-sort-link">
+                                    Category <span class="sort-icon">{% if sort == 'category_asc' %}▲{% elif sort == 'category_desc' %}▼{% else %}⇅{% endif %}</span>
+                                </a>
+                            </th>
+                            <th scope="col">Submitted by</th>
+                            <th scope="col" class="sortable-th" data-column="status">
+                                <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='status_desc' if sort == 'status_asc' else 'status_asc') }}" class="th-sort-link">
+                                    Status <span class="sort-icon">{% if sort == 'status_asc' %}▲{% elif sort == 'status_desc' %}▼{% else %}⇅{% endif %}</span>
+                                </a>
+                            </th>
+                            <th scope="col" class="sortable-th" data-column="submitted">
+                                <a href="{{ url_for('admin.admin_dashboard', status=selected, category=selected_category, sort='oldest' if sort == 'newest' else 'newest') }}" class="th-sort-link">
+                                    Submitted <span class="sort-icon">{% if sort == 'newest' %}▼{% elif sort == 'oldest' %}▲{% else %}⇅{% endif %}</span>
+                                </a>
+                            </th>
+                            <th scope="col">Last updated</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in complaints %}
+                        <tr>
+                            <td class="cell-id">#{{ c.id }}</td>
+                            <td class="cell-title font-medium">{{ c.title }}</td>
+                            <td class="cell-category">{{ c.category }}</td>
+                            <td class="cell-user">{{ users.get(c.user_id, 'Unknown') }}</td>
+                            <td class="cell-status">
+                                <span class="badge {{ c.status|lower|replace(' ', '-') }}">
+                                    {{ c.status }}
+                                </span>
+                            </td>
+                            <td class="cell-date">{{ c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '-' }}</td>
+                            <td class="cell-date">{{ c.updated_at.strftime('%d-%m-%Y %H:%M') if c.updated_at else '-' }}</td>
+                            <td class="cell-action">
+                                <a class="btn btn-sm"
+                                   href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}"
+                                   aria-label="Manage complaint #{{ c.id }}: {{ c.title }}">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row">
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <p>No complaints found matching the criteria.</p>
+                                    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">
+                                        Clear Filters
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 
 </div>
 

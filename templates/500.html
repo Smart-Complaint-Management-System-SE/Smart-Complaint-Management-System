@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Internal Server Error</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 Internal Server Error - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
-    <h1>500 - Internal Server Error</h1>
-    <p>Something went wrong on our side. Please try again later.</p>
-    <a href="{{ url_for('home') }}">Go to Home</a>
+    <main id="main-content">
+        <h1>500 - Internal Server Error</h1>
+        <p>Something went wrong on our side. Please try again later.</p>
+        <a class="btn" href="{{ url_for('home') }}">Go to Home</a>
+    </main>
 </div>
 </body>
 </html>
