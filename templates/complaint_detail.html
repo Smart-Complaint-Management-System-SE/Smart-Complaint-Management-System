@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container detail-container">
     {% include '_nav.html' %}
 
@@ -85,7 +86,7 @@
         </section>
 
         <!-- Resolution Box (Visible when resolved or resolution exists) -->
-        <section class="resolution-card" id="resolution-box" style="{% if not complaint.resolution %}display: none;{% endif %}">
+        <section class="resolution-card" id="resolution-box" role="region" aria-label="Official Resolution" style="{% if not complaint.resolution %}display: none;{% endif %}">
             <div class="resolution-header">
                 <span class="resolution-icon">📋</span>
                 <h2>Official Resolution Remarks</h2>

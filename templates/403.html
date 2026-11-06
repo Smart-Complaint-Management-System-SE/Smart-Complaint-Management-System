@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Access Denied</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Access Denied - Smart Complaint Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
-    <h1>403 – Access Denied</h1>
-    <p>You do not have permission to view this page.</p>
-    <a href="{{ url_for('auth.login') }}">Go to login</a>
+    <main id="main-content">
+        <h1>403 – Access Denied</h1>
+        <p>You do not have permission to view this page.</p>
+        <a class="btn" href="{{ url_for('auth.login') }}">Go to login</a>
+    </main>
 </div>
 </body>
 </html>
