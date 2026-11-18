@@ -157,6 +157,17 @@ def spa_app(path=""):
     return render_react_app()
 
 
+@app.errorhandler(400)
+def bad_request(e):
+    if (
+        request.path.startswith("/api")
+        or request.args.get("format") == "json"
+        or request.accept_mimetypes.best == "application/json"
+    ):
+        return jsonify({"error": "Bad request or session expired. Please try again."}), 400
+    return "Bad Request", 400
+
+
 @app.errorhandler(403)
 def forbidden(e):
     logger.warning(

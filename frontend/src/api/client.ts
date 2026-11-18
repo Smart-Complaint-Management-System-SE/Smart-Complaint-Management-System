@@ -11,14 +11,14 @@ import {
 
 let cachedCsrfToken: string | null = null;
 
-export async function getCsrfToken(): Promise<string> {
-  if (cachedCsrfToken) return cachedCsrfToken;
+export async function getCsrfToken(forceRefresh = false): Promise<string> {
+  if (cachedCsrfToken && !forceRefresh) return cachedCsrfToken;
 
   try {
     const res = await fetch('/api/csrf-token', { credentials: 'include' });
     if (res.ok) {
       const data = await res.json();
-      cachedCsrfToken = data.csrf_token;
+      cachedCsrfToken = data.csrf_token || null;
       return cachedCsrfToken || '';
     }
   } catch (err) {
@@ -28,13 +28,17 @@ export async function getCsrfToken(): Promise<string> {
   return '';
 }
 
+export function setCsrfToken(token: string | null) {
+  cachedCsrfToken = token;
+}
+
 export function clearCsrfToken() {
   cachedCsrfToken = null;
 }
 
 export async function request<T>(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit & { _isRetry?: boolean } = {}
 ): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
   const headers = new Headers(options.headers || {});
@@ -64,6 +68,25 @@ export async function request<T>(
     return {} as T;
   }
 
+  // Automatic retry once on 400 for mutating calls if CSRF was stale
+  if (response.status === 400 && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !options._isRetry) {
+    clearCsrfToken();
+    const freshCsrf = await getCsrfToken(true);
+    const retryHeaders = new Headers(options.headers || {});
+    if (!retryHeaders.has('Accept')) retryHeaders.set('Accept', 'application/json');
+    if (!retryHeaders.has('Content-Type') && !(options.body instanceof FormData)) {
+      retryHeaders.set('Content-Type', 'application/json');
+    }
+    if (freshCsrf) {
+      retryHeaders.set('X-CSRF-Token', freshCsrf);
+    }
+    return request<T>(url, {
+      ...options,
+      headers: retryHeaders,
+      _isRetry: true,
+    });
+  }
+
   const contentType = response.headers.get('content-type') || '';
   let data: any = null;
 
@@ -79,8 +102,12 @@ export async function request<T>(
   }
 
   if (!response.ok) {
-    const errorMessage =
-      data?.error || data?.message || `Request failed with status ${response.status}`;
+    let errorMessage = data?.error || data?.message;
+    if (!errorMessage || errorMessage.includes('<!doctype') || errorMessage.includes('<html')) {
+      errorMessage = response.status === 400
+        ? 'Session or security token expired. Please try submitting again.'
+        : `Request failed with status ${response.status}`;
+    }
     const error = new Error(errorMessage);
     (error as any).status = response.status;
     (error as any).data = data;
@@ -95,14 +122,17 @@ export const authApi = {
     return request('/api/auth/me');
   },
 
-  async login(email: string, password: string): Promise<{ success: boolean; user: User }> {
+  async login(email: string, password: string): Promise<{ success: boolean; user: User; csrf_token?: string }> {
     clearCsrfToken();
-    const result = await request<{ success: boolean; user: User }>('/api/auth/login', {
+    const result = await request<{ success: boolean; user: User; csrf_token?: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    // refresh token after login
-    await getCsrfToken();
+    if (result.csrf_token) {
+      setCsrfToken(result.csrf_token);
+    } else {
+      await getCsrfToken(true);
+    }
     return result;
   },
 
@@ -114,11 +144,20 @@ export const authApi = {
   },
 
   async logout(): Promise<{ success: boolean }> {
-    const res = await request<{ success: boolean }>('/api/auth/logout', {
-      method: 'POST',
-    });
-    clearCsrfToken();
-    return res;
+    try {
+      const res = await request<{ success: boolean; csrf_token?: string }>('/api/auth/logout', {
+        method: 'POST',
+      });
+      if (res.csrf_token) {
+        setCsrfToken(res.csrf_token);
+      } else {
+        clearCsrfToken();
+      }
+      return res;
+    } catch {
+      clearCsrfToken();
+      return { success: true };
+    }
   },
 };
 

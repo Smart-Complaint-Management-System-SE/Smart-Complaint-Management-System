@@ -105,7 +105,8 @@ def api_login():
                 "name": user.name,
                 "email": user.email,
                 "role": user.role
-            }
+            },
+            "csrf_token": session["csrf_token"]
         }), 200
 
     if reserved:
@@ -175,9 +176,12 @@ def api_register():
 @api_bp.route("/auth/logout", methods=["POST"])
 def api_logout():
     session.clear()
+    token = secrets.token_hex(32)
+    session["csrf_token"] = token
     return jsonify({
         "success": True,
-        "message": "Logged out successfully."
+        "message": "Logged out successfully.",
+        "csrf_token": token
     }), 200
 
 
