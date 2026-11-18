@@ -11,6 +11,7 @@ from auth import auth
 from complaints import complaint_bp
 from admin import admin
 from categories import categories_bp
+from api import api_bp
 from flask_migrate import Migrate
 
 
@@ -111,6 +112,7 @@ app.register_blueprint(auth)
 app.register_blueprint(complaint_bp)
 app.register_blueprint(admin)
 app.register_blueprint(categories_bp)
+app.register_blueprint(api_bp)
 
 
 def csrf_token():
@@ -136,9 +138,23 @@ def check_csrf():
             abort(400)
 
 
+def render_react_app():
+    dist_index = os.path.join(app.root_path, "static", "dist", "index.html")
+    if os.path.exists(dist_index):
+        with open(dist_index, "r", encoding="utf-8") as f:
+            return f.read(), 200, {"Content-Type": "text/html; charset=utf-8"}
+    return "Smart Complaint Management System"
+
+
 @app.route("/")
 def home():
-    return "Smart Complaint Management System"
+    return render_react_app()
+
+
+@app.route("/app")
+@app.route("/app/<path:path>")
+def spa_app(path=""):
+    return render_react_app()
 
 
 @app.errorhandler(403)
