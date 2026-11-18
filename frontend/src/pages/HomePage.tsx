@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   MessageSquareWarning,
   ShieldCheck,
-  Zap,
   CheckCircle2,
   Clock,
   ArrowRight,
@@ -11,7 +10,13 @@ import {
   Users,
   Layers,
   ChevronRight,
+  Zap,
+  Lock,
+  Search,
+  Activity,
 } from 'lucide-react';
+import { StatusBadge } from '../components/StatusBadge';
+import { CategoryBadge } from '../components/CategoryBadge';
 
 interface Props {
   navigate: (path: string) => void;
@@ -21,204 +26,240 @@ export const HomePage: React.FC<Props> = ({ navigate }) => {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-20 pb-20 animate-fade-in">
+    <div className="space-y-24 pb-24 animate-fade-in bg-grid-slate">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24">
-        {/* Ambient background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/10 blur-[100px] rounded-full pointer-events-none -z-10" />
+      <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28">
+        {/* Artistic glowing radial meshes */}
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/10 blur-[130px] rounded-full pointer-events-none -z-10" />
 
-        <div className="max-w-5xl mx-auto px-4 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800/80 shadow-sm animate-pulse-subtle">
+        <div className="max-w-6xl mx-auto px-4 text-center space-y-8">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-500/30 backdrop-blur-md shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>Next-Generation Grievance Resolution Platform</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-            Resolve issues faster with <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Smart Complaint Tracking
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+            Turn campus concerns into <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+              verified solutions.
             </span>
           </h1>
 
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-            A unified, transparent portal for students and administration. Submit academic, hostel, or
-            technical concerns and track their step-by-step resolution in real time.
+          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            A transparent grievance portal connecting students, staff, and campus administration.
+            Submit academic, hostel, or technical tickets and track their step-by-step resolution in real time.
           </p>
 
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+          {/* Action CTAs */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
             {!user ? (
               <>
                 <button
                   onClick={() => navigate('/login')}
-                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
+                  className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl font-black text-sm bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/45 hover:-translate-y-0.5 transition-all"
                 >
                   <span>Submit a Complaint</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate('/login')}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-100 dark:border-slate-800 shadow-sm transition-all"
+                  className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl font-bold text-sm bg-white/80 hover:bg-white text-slate-800 border border-slate-200 dark:bg-slate-900/80 dark:hover:bg-slate-900 dark:text-slate-100 dark:border-white/10 shadow-lg shadow-black/5 hover:-translate-y-0.5 transition-all backdrop-blur-md"
                 >
-                  <ShieldCheck className="w-4 h-4 text-purple-600" />
-                  <span>Admin Access</span>
+                  <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span>Admin Portal</span>
                 </button>
               </>
             ) : user.role === 'admin' ? (
               <button
                 onClick={() => navigate('/admin')}
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/30 hover:-translate-y-0.5 transition-all"
               >
-                <span>Go to Admin Dashboard</span>
+                <span>Open Admin Dashboard</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <>
                 <button
                   onClick={() => navigate('/complaint/new')}
-                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5 transition-all"
+                  className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl font-black text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/30 hover:-translate-y-0.5 transition-all"
                 >
-                  <span>File New Complaint</span>
+                  <span>Submit Grievance</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-100 dark:border-slate-800 shadow-sm transition-all"
+                  className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl font-bold text-sm bg-white/80 text-slate-800 border border-slate-200 dark:bg-slate-900/80 dark:text-slate-100 dark:border-white/10 shadow-md hover:-translate-y-0.5 transition-all"
                 >
-                  <span>View My Dashboard</span>
+                  <span>Go to My Dashboard</span>
                 </button>
               </>
             )}
           </div>
+
+          {/* Interactive Live Ticket Showcase Card inside Hero */}
+          <div className="pt-8 max-w-2xl mx-auto">
+            <div className="p-6 rounded-3xl artistic-card text-left space-y-4 hover-lift">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-slate-400">#4</span>
+                  <CategoryBadge category="Academic" size="sm" />
+                </div>
+                <StatusBadge status="Resolved" size="sm" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  Library 2nd Floor Study Room AC Fixed
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                  The central library silent reading section air conditioning has been repaired and verified.
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 font-medium flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                <span>
+                  <strong>Admin Resolution:</strong> New compressor unit installed by campus maintenance.
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Live Impact Counters Strip */}
+      {/* KPI Impact Counters */}
       <section className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 backdrop-blur-md shadow-xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 rounded-3xl artistic-card shadow-2xl">
           <div className="text-center p-3">
-            <div className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">99.4%</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+            <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              99.4%
+            </div>
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mt-1.5">
               Resolution Rate
             </div>
           </div>
-          <div className="text-center p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-3xl font-extrabold text-purple-600 dark:text-purple-400">&lt; 24h</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
-              First Response
+          <div className="text-center p-3 border-l border-slate-100 dark:border-white/5">
+            <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              &lt; 24h
+            </div>
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mt-1.5">
+              Initial Triage
             </div>
           </div>
-          <div className="text-center p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">100%</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+          <div className="text-center p-3 border-l border-slate-100 dark:border-white/5">
+            <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              100%
+            </div>
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mt-1.5">
               Audit Transparency
             </div>
           </div>
-          <div className="text-center p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">3-Tier</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
-              State Governance
+          <div className="text-center p-3 border-l border-slate-100 dark:border-white/5">
+            <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+              3-Tier
+            </div>
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mt-1.5">
+              Strict Governance
             </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Showcase Grid */}
+      {/* Core Features Grid */}
       <section className="max-w-6xl mx-auto px-4 space-y-12">
         <div className="text-center space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            Platform Capabilities
+          <span className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+            Engineered For Clarity
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            Enterprise Grievance Workflow
           </h2>
-          <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-            Everything you need for seamless complaint handling
-          </h3>
-          <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto text-sm">
-            Designed for accountability, speed, and clear communication between students, staff, and leadership.
+          <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto text-sm font-medium">
+            Designed for institutional scale, security, and immediate clarity between students and authorities.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-7 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+          <div className="p-8 rounded-3xl artistic-card hover-lift space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-1 ring-amber-500/20 shadow-md">
               <Clock className="w-6 h-6" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              Real-Time Status Tracking
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Track the exact stage of your complaint: Pending, In Progress, and Resolved with live timeline
-              steppers and instant progress updates.
+            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              Real-Time Visual Stepper
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+              Every complaint is paired with an interactive 3-stage progression timeline. Track exact timestamps,
+              admin updates, and completion remarks.
             </p>
           </div>
 
-          <div className="p-7 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+          <div className="p-8 rounded-3xl artistic-card hover-lift space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-500/20 shadow-md">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              Strict State Machine
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Complaints can only transition through validated states: Pending to In Progress, In Progress to Resolved
-              with compulsory remarks, and controlled reopening.
+            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              Enforced State Transitions
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+              Strict state machine validation: Pending to In Progress, In Progress to Resolved with mandatory resolution
+              remarks, and controlled reopening.
             </p>
           </div>
 
-          <div className="p-7 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+          <div className="p-8 rounded-3xl artistic-card hover-lift space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center ring-1 ring-purple-500/20 shadow-md">
               <Layers className="w-6 h-6" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              Dynamic Categorization
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Organize complaints under Academic, Infrastructure, Hostel, Technical, or custom administrative categories
-              with instant filter and search.
+            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              Dynamic Category Management
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+              Categorize complaints under Academic, Infrastructure, Hostel, Technical, or custom administrative departments
+              with instant filtering and analytics.
             </p>
           </div>
         </div>
       </section>
 
-      {/* How It Works 3-Step Walkthrough */}
-      <section className="max-w-6xl mx-auto px-4 py-8">
-        <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 text-white shadow-2xl relative overflow-hidden">
+      {/* How it works workflow */}
+      <section className="max-w-6xl mx-auto px-4">
+        <div className="p-8 md:p-14 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl relative overflow-hidden border border-white/10">
           <div className="relative z-10 space-y-8">
             <div className="max-w-xl">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-                Simple Workflow
+              <span className="text-xs font-black uppercase tracking-widest text-indigo-400">
+                Transparent Lifecycle
               </span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-white">
+              <h3 className="text-2xl sm:text-3xl font-black mt-1 text-white">
                 How SCMS resolves issues in 3 steps
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-              <div className="space-y-3 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500 text-white font-bold flex items-center justify-center text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              <div className="space-y-3 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500 text-white font-black flex items-center justify-center text-sm shadow-md">
                   1
                 </div>
-                <h5 className="font-bold text-base text-white">Submit Grievance</h5>
-                <p className="text-xs text-indigo-200/80 leading-relaxed">
-                  Log in, specify title, select department category, and provide details with automatic timestamping.
+                <h4 className="font-extrabold text-base text-white">Submit Grievance</h4>
+                <p className="text-xs text-indigo-200/80 leading-relaxed font-medium">
+                  Provide a concise title, pick the department, and describe your concern with real-time field validation.
                 </p>
               </div>
 
-              <div className="space-y-3 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                <div className="w-8 h-8 rounded-lg bg-purple-500 text-white font-bold flex items-center justify-center text-sm">
+              <div className="space-y-3 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div className="w-9 h-9 rounded-xl bg-purple-500 text-white font-black flex items-center justify-center text-sm shadow-md">
                   2
                 </div>
-                <h5 className="font-bold text-base text-white">Admin Triage & Action</h5>
-                <p className="text-xs text-indigo-200/80 leading-relaxed">
-                  Administrators review the complaint, move it to In Progress, and coordinate with concerned authorities.
+                <h4 className="font-extrabold text-base text-white">Admin Triage</h4>
+                <p className="text-xs text-indigo-200/80 leading-relaxed font-medium">
+                  Authorised personnel assign priority, move the ticket to In Progress, and begin investigation.
                 </p>
               </div>
 
-              <div className="space-y-3 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white font-bold flex items-center justify-center text-sm">
+              <div className="space-y-3 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white font-black flex items-center justify-center text-sm shadow-md">
                   3
                 </div>
-                <h5 className="font-bold text-base text-white">Resolution & Feedback</h5>
-                <p className="text-xs text-indigo-200/80 leading-relaxed">
-                  The issue is marked Resolved with detailed resolution remarks visible directly on your dashboard.
+                <h4 className="font-extrabold text-base text-white">Resolution & Closure</h4>
+                <p className="text-xs text-indigo-200/80 leading-relaxed font-medium">
+                  The issue is marked Resolved with official administrator remarks visible directly on your dashboard.
                 </p>
               </div>
             </div>

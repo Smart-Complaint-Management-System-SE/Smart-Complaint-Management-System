@@ -38,42 +38,45 @@ export const ComplaintTimeline: React.FC<Props> = ({
   const steps = [
     {
       title: 'Submitted',
-      desc: 'Complaint received and queued',
+      desc: 'Complaint logged in the registry',
       date: formatDate(createdAt),
       done: true,
       active: isPending,
       icon: Clock,
-      color: 'amber',
+      gradient: 'from-amber-500 to-orange-500',
+      activeRing: 'ring-amber-500/30 dark:ring-amber-400/40',
     },
     {
       title: 'In Progress',
-      desc: 'Administrator is investigating & addressing issue',
-      date: isInProgress || isResolved ? formatDate(updatedAt || createdAt) : 'Pending review',
+      desc: 'Admin investigation & active triage',
+      date: isInProgress || isResolved ? formatDate(updatedAt || createdAt) : 'Pending triage',
       done: isInProgress || isResolved,
       active: isInProgress,
       icon: RefreshCw,
-      color: 'blue',
+      gradient: 'from-blue-600 to-cyan-500',
+      activeRing: 'ring-blue-500/30 dark:ring-blue-400/40',
     },
     {
       title: 'Resolved',
-      desc: resolution ? 'Resolution provided' : 'Awaiting final resolution',
+      desc: resolution ? 'Verified resolution delivered' : 'Awaiting administrative action',
       date: isResolved ? formatDate(updatedAt || createdAt) : 'Awaiting resolution',
       done: isResolved,
       active: isResolved,
       icon: Sparkles,
-      color: 'emerald',
+      gradient: 'from-emerald-500 to-teal-500',
+      activeRing: 'ring-emerald-500/30 dark:ring-emerald-400/40',
     },
   ];
 
   return (
-    <div className="w-full py-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-        {/* Connecting progress line on medium+ screens */}
-        <div className="hidden md:block absolute top-7 left-12 right-12 h-1 bg-slate-200 dark:bg-slate-800 -z-0">
+    <div className="w-full py-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+        {/* Artistic glowing connector line */}
+        <div className="hidden md:block absolute top-7 left-14 right-14 h-1.5 bg-slate-200/80 dark:bg-slate-800 rounded-full -z-0 overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-500 via-blue-500 to-emerald-500 transition-all duration-500 rounded-full"
+            className="h-full bg-gradient-to-r from-amber-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-700 shadow-sm"
             style={{
-              width: isResolved ? '100%' : isInProgress ? '50%' : '5%',
+              width: isResolved ? '100%' : isInProgress ? '50%' : '15%',
             }}
           />
         </div>
@@ -81,17 +84,13 @@ export const ComplaintTimeline: React.FC<Props> = ({
         {steps.map((step, idx) => {
           const Icon = step.icon;
           return (
-            <div key={idx} className="relative z-10 flex flex-col md:items-center md:text-center">
+            <div key={idx} className="relative z-10 flex flex-col md:items-center md:text-center group">
               <div className="flex items-center gap-4 md:flex-col md:gap-3">
                 <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md ${
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg ${
                     step.done
                       ? step.active
-                        ? step.color === 'emerald'
-                          ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 dark:ring-emerald-900/50 shadow-emerald-500/20'
-                          : step.color === 'blue'
-                          ? 'bg-blue-600 text-white ring-4 ring-blue-200 dark:ring-blue-900/50 shadow-blue-500/20'
-                          : 'bg-amber-500 text-white ring-4 ring-amber-200 dark:ring-amber-900/50 shadow-amber-500/20'
+                        ? `bg-gradient-to-br ${step.gradient} text-white ring-8 ${step.activeRing} scale-105 shadow-xl`
                         : 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
                       : 'bg-slate-100 dark:bg-slate-800/80 text-slate-400 border-2 border-dashed border-slate-300 dark:border-slate-700'
                   }`}
@@ -99,28 +98,30 @@ export const ComplaintTimeline: React.FC<Props> = ({
                   {step.done && !step.active ? (
                     <Check className="w-6 h-6 stroke-[3]" />
                   ) : (
-                    <Icon className={`w-6 h-6 ${step.active && step.icon === RefreshCw ? 'animate-spin' : ''}`} />
+                    <Icon
+                      className={`w-6 h-6 ${step.active && step.icon === RefreshCw ? 'animate-spin' : ''}`}
+                    />
                   )}
                 </div>
 
                 <div className="flex-1 md:w-full">
                   <div className="flex items-center md:justify-center gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Step {idx + 1}
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                      Phase 0{idx + 1}
                     </span>
                     {step.active && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                        Current
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-500/25">
+                        Active Stage
                       </span>
                     )}
                   </div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-white mt-1">
                     {step.title}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[220px] md:mx-auto">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[220px] md:mx-auto font-medium">
                     {step.desc}
                   </p>
-                  <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-1.5 font-mono">
                     {step.date}
                   </p>
                 </div>

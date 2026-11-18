@@ -103,10 +103,30 @@ export async function request<T>(
 
   if (!response.ok) {
     let errorMessage = data?.error || data?.message;
-    if (!errorMessage || errorMessage.includes('<!doctype') || errorMessage.includes('<html')) {
-      errorMessage = response.status === 400
-        ? 'Session or security token expired. Please try submitting again.'
-        : `Request failed with status ${response.status}`;
+    if (typeof errorMessage !== 'string') {
+      errorMessage = '';
+    }
+    const lower = errorMessage.toLowerCase();
+    if (
+      !errorMessage ||
+      lower.includes('<!doctype') ||
+      lower.includes('<html') ||
+      lower.includes('<body') ||
+      /<[a-z][\s\S]*>/i.test(errorMessage)
+    ) {
+      if (response.status === 400) {
+        errorMessage = 'Session or security token expired. Please try submitting again.';
+      } else if (response.status === 401) {
+        errorMessage = 'Your session has expired. Please sign in again.';
+      } else if (response.status === 403) {
+        errorMessage = 'Access denied. You do not have permission for this action.';
+      } else if (response.status === 404) {
+        errorMessage = 'The requested resource was not found.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Internal server error. Please try again shortly.';
+      } else {
+        errorMessage = `Request failed with status ${response.status}`;
+      }
     }
     const error = new Error(errorMessage);
     (error as any).status = response.status;

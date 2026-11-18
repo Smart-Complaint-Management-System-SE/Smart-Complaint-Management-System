@@ -2,17 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { complaintsApi, categoriesApi } from '../api/client';
-import { Category } from '../types';
 import { getCategoryIcon } from '../components/CategoryBadge';
 import {
-  PlusCircle,
   ArrowLeft,
-  CheckCircle2,
   AlertCircle,
-  FileText,
   Send,
-  HelpCircle,
   Sparkles,
+  Info,
+  Check,
 } from 'lucide-react';
 
 interface Props {
@@ -21,10 +18,10 @@ interface Props {
 
 const DEFAULT_CATEGORIES = [
   'Academic',
-  'Infrastructure',
   'Hostel',
-  'Technical',
+  'Infrastructure',
   'Other',
+  'Technical',
 ];
 
 export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
@@ -50,7 +47,6 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
           }
         }
       } catch {
-        // Fallback to default categories
         setCategories(DEFAULT_CATEGORIES);
       }
     };
@@ -84,7 +80,10 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
         navigate('/complaints');
       }
     } catch (err: any) {
-      const msg = err.message || 'Failed to submit complaint. Please try again.';
+      let msg = err.message || 'Failed to submit complaint. Please try again.';
+      if (msg.includes('<!doctype') || msg.includes('<html')) {
+        msg = 'Session expired. Please try submitting again.';
+      }
       setFormError(msg);
       error(msg);
     } finally {
@@ -93,44 +92,44 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in">
-      {/* Top Navigation */}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in bg-grid-slate">
+      {/* Back button */}
       <button
         type="button"
         onClick={() => navigate('/dashboard')}
-        className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to Dashboard</span>
+        <span>Return to Dashboard</span>
       </button>
 
-      {/* Main Form Container */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200/80 dark:border-slate-800 space-y-8">
+      {/* Main Form Card */}
+      <div className="artistic-card rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-500/30 mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>New Grievance Ticket</span>
+            <span>Grievance Submission Studio</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Submit a Complaint
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Submit a Grievance Ticket
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Provide details about your issue. Administrators will triage, update status, and post resolutions.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Provide concise details about the issue. Campus personnel will review and advance status through the resolution pipeline.
           </p>
         </div>
 
         {formError && (
-          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 text-xs font-semibold flex items-start gap-2.5">
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 text-xs font-semibold flex items-start gap-2.5 animate-slide-up">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
             <span>{formError}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Category Picker (Cards Grid) */}
+          {/* Department Selection Cards */}
           <div className="space-y-2.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Select Category <span className="text-rose-500">*</span>
+            <label className="block text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">
+              Department Classification <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {categories.map((cat) => {
@@ -140,22 +139,27 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
-                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border text-center transition-all ${
+                    className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                       isSelected
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20 shadow-md'
-                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                        ? 'bg-gradient-to-b from-indigo-50 to-indigo-100/60 dark:from-indigo-950/80 dark:to-indigo-900/40 border-indigo-500 text-indigo-700 dark:text-indigo-200 ring-2 ring-indigo-500/30 shadow-lg scale-102'
+                        : 'bg-white/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
+                    {isSelected && (
+                      <span className="absolute top-2 right-2 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+                    )}
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
                         isSelected
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                       }`}
                     >
-                      {getCategoryIcon(cat, 'w-4 h-4')}
+                      {getCategoryIcon(cat, 'w-5 h-5')}
                     </div>
-                    <span className="text-xs font-bold">{cat}</span>
+                    <span className="text-xs font-black">{cat}</span>
                   </button>
                 );
               })}
@@ -167,13 +171,13 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
             <div className="flex justify-between items-center">
               <label
                 htmlFor="complaint-title"
-                className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+                className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300"
               >
                 Complaint Title <span className="text-rose-500">*</span>
               </label>
               <span
-                className={`text-[11px] font-mono ${
-                  title.length > 90 ? 'text-amber-600 font-bold' : 'text-slate-400'
+                className={`text-[11px] font-mono font-bold ${
+                  title.length > 90 ? 'text-amber-500' : 'text-slate-400'
                 }`}
               >
                 {title.length}/100
@@ -187,7 +191,7 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. WiFi outage in Library 2nd floor"
-              className="w-full px-4 py-3 rounded-2xl text-sm font-medium bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full px-4 py-3 rounded-2xl text-sm font-semibold bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 transition-all shadow-inner"
             />
           </div>
 
@@ -196,11 +200,11 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
             <div className="flex justify-between items-center">
               <label
                 htmlFor="complaint-description"
-                className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+                className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300"
               >
                 Detailed Description <span className="text-rose-500">*</span>
               </label>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-400 font-mono font-semibold">
                 {description.length} chars
               </span>
             </div>
@@ -210,9 +214,20 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
               rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the issue in detail, including specific location, time observed, and any impact..."
-              className="w-full px-4 py-3 rounded-2xl text-sm font-medium bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y"
+              placeholder="Provide complete context, room number, equipment identifier, and observed behavior to help administrators resolve the grievance promptly..."
+              className="w-full px-4 py-3 rounded-2xl text-sm font-medium bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 transition-all resize-y shadow-inner"
             />
+          </div>
+
+          {/* Helpful Tips Card */}
+          <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-3">
+            <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-600 dark:text-indigo-400" />
+            <div className="space-y-0.5 leading-relaxed">
+              <p className="font-bold">Tips for faster resolution:</p>
+              <p className="text-indigo-700/90 dark:text-indigo-300/80 font-medium">
+                Include physical location details (building, floor, wing). Administrators verify each report and record official resolution remarks upon completion.
+              </p>
+            </div>
           </div>
 
           {/* Action buttons */}
@@ -220,21 +235,21 @@ export const SubmitComplaintPage: React.FC<Props> = ({ navigate }) => {
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="w-full sm:w-auto px-5 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/35 disabled:opacity-50 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-xs sm:text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/45 disabled:opacity-50 transition-all"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Submit Complaint</span>
+                  <span>Submit Grievance</span>
                 </>
               )}
             </button>

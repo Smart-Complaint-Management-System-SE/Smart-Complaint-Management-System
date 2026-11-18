@@ -12,9 +12,9 @@ export const StatusBadge: React.FC<Props> = ({ status, size = 'md', showIcon = t
   const normStatus = status === 'In Progress' ? 'In Progress' : status === 'Resolved' ? 'Resolved' : 'Pending';
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 gap-1',
-    md: 'text-xs font-semibold px-2.5 py-1 gap-1.5',
-    lg: 'text-sm font-semibold px-3.5 py-1.5 gap-2',
+    sm: 'text-[11px] px-2.5 py-0.5 gap-1.5 font-semibold',
+    md: 'text-xs px-3 py-1 gap-2 font-bold',
+    lg: 'text-sm px-4 py-1.5 gap-2.5 font-bold',
   }[size];
 
   const iconSizes = {
@@ -26,8 +26,12 @@ export const StatusBadge: React.FC<Props> = ({ status, size = 'md', showIcon = t
   if (normStatus === 'Resolved') {
     return (
       <span
-        className={`inline-flex items-center rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 shadow-sm ${sizeClasses}`}
+        className={`inline-flex items-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/25 dark:ring-emerald-400/30 backdrop-blur-sm ${sizeClasses}`}
       >
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
         {showIcon && <CheckCircle2 className={`${iconSizes} text-emerald-600 dark:text-emerald-400`} />}
         <span>Resolved</span>
       </span>
@@ -37,9 +41,18 @@ export const StatusBadge: React.FC<Props> = ({ status, size = 'md', showIcon = t
   if (normStatus === 'In Progress') {
     return (
       <span
-        className={`inline-flex items-center rounded-full font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60 shadow-sm ${sizeClasses}`}
+        className={`inline-flex items-center rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-500/25 dark:ring-blue-400/30 backdrop-blur-sm ${sizeClasses}`}
       >
-        {showIcon && <RefreshCw className={`${iconSizes} text-blue-600 dark:text-blue-400 animate-spin`} style={{ animationDuration: '6s' }} />}
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+        </span>
+        {showIcon && (
+          <RefreshCw
+            className={`${iconSizes} text-blue-600 dark:text-blue-400 animate-spin`}
+            style={{ animationDuration: '4s' }}
+          />
+        )}
         <span>In Progress</span>
       </span>
     );
@@ -47,8 +60,11 @@ export const StatusBadge: React.FC<Props> = ({ status, size = 'md', showIcon = t
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 shadow-sm ${sizeClasses}`}
+      className={`inline-flex items-center rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/25 dark:ring-amber-400/30 backdrop-blur-sm ${sizeClasses}`}
     >
+      <span className="relative flex h-2 w-2">
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+      </span>
       {showIcon && <Clock className={`${iconSizes} text-amber-600 dark:text-amber-400`} />}
       <span>Pending</span>
     </span>

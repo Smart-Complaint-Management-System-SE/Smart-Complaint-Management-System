@@ -10,19 +10,19 @@ describe('StatusBadge Component', () => {
   it('renders Pending status badge correctly', () => {
     const { container } = render(<StatusBadge status="Pending" />);
     expect(screen.getByText('Pending')).toBeInTheDocument();
-    expect(container.firstChild).toHaveClass('bg-amber-50');
+    expect(container.firstChild).toHaveClass('bg-amber-500/10');
   });
 
   it('renders In Progress status badge correctly', () => {
     const { container } = render(<StatusBadge status="In Progress" />);
     expect(screen.getByText('In Progress')).toBeInTheDocument();
-    expect(container.firstChild).toHaveClass('bg-blue-50');
+    expect(container.firstChild).toHaveClass('bg-blue-500/10');
   });
 
   it('renders Resolved status badge correctly', () => {
     const { container } = render(<StatusBadge status="Resolved" />);
     expect(screen.getByText('Resolved')).toBeInTheDocument();
-    expect(container.firstChild).toHaveClass('bg-emerald-50');
+    expect(container.firstChild).toHaveClass('bg-emerald-500/10');
   });
 });
 
@@ -55,6 +55,6 @@ describe('ComplaintTimeline Component', () => {
     expect(screen.getByText('Submitted')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
     expect(screen.getByText('Resolved')).toBeInTheDocument();
-    expect(screen.getByText('Current')).toBeInTheDocument();
+    expect(screen.getByText('Active Stage')).toBeInTheDocument();
   });
 });
