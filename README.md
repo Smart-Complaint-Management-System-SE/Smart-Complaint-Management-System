@@ -281,4 +281,4 @@ The `instance/` folder holding the SQLite database is created when the app first
 | Dhawal Pathak | PES1UG24CS151 | User-side functionality & core system |
 | Harshitha P | PES1UG24CS186 | Admin functionality & interface |
 | GANESH M | PES1UG24CS168 | DevOps, deployment, security validation & technical documentation |
-| Chiranthan B S Raj | PES1UG24CS134 | To be confirmed |
+| Chiranthan B S Raj | PES1UG24CS134 | Frontend UI/UX & accessibility, authentication security, production database configuration & documentation |
