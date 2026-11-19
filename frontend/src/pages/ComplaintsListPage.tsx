@@ -231,6 +231,8 @@ export const ComplaintsListPage: React.FC<Props> = ({ navigate, initialStatus })
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto font-medium">
               {statusFilter !== 'All' || categoryFilter !== 'All' || searchQuery
                 ? 'No grievance tickets match your current filters. Clear the search or status to view more.'
+                : user?.role === 'admin'
+                ? 'No complaints have been registered by students yet.'
                 : 'You have not submitted any complaints yet.'}
             </p>
           </div>
@@ -240,6 +242,13 @@ export const ComplaintsListPage: React.FC<Props> = ({ navigate, initialStatus })
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white"
             >
               Reset Filters
+            </button>
+          ) : user?.role === 'admin' ? (
+            <button
+              onClick={() => navigate('/admin')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/25 transition-all"
+            >
+              <span>Go to Admin Hub</span>
             </button>
           ) : (
             <button
