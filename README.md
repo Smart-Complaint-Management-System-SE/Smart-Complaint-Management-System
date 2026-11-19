@@ -3,6 +3,46 @@
 
 A web-based complaint management system developed using Flask and SQLite. The system allows users to register, log in, submit complaints, track their complaints, and view their current status. Administrators can manage all submitted complaints, update their status, and provide resolution details.
 
+## Modern React Frontend (SPA)
+
+SCMS now includes a completely redesigned, responsive, modern Single Page Application (SPA) built with **React 18**, **TypeScript**, **Tailwind CSS**, and **Lucide Icons**:
+
+- **Landing Page**: Modern hero section, live impact metrics, feature showcases, and interactive 3-step walkthrough.
+- **Authentication**: User Registration, Login, Session Management, Real-time Validation, Lockout protection, and 1-Click Demo autofill.
+- **User Dashboard**: Overview KPI cards (Pending, In Progress, Resolved, Total), quick complaint filing, recent complaints list.
+- **Interactive Complaint Submission**: Category picker with visual department icons, live character counter, detailed description form.
+- **Real-Time Complaint Tracker**: Stepper timeline (Submitted -> In Progress -> Resolved), timestamps, official administrator resolution remarks, and complete audit history log.
+- **Admin Dashboard**:
+  - Live analytics cards & department breakdown.
+  - Multi-status tabs with live count chips.
+  - Category dropdown filter, sorting (Newest, Oldest, Title A-Z, ID), and live search.
+  - Complaint Management Modal enforcing strict state transitions (Pending -> In Progress -> Resolved with remarks, reopen with reason).
+  - Category Management console (CRUD categories).
+- **Theme**: Dark and Light mode support with automatic system preference detection.
+
+### Running the Frontend
+
+The React frontend is built into `static/dist/` and served automatically by Flask at `http://127.0.0.1:5000/`.
+
+For development with hot-module reloading:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+To run frontend component tests:
+```bash
+cd frontend
+npm test
+```
+
+To build production assets:
+```bash
+cd frontend
+npm run build
+```
+
 ## Features
 
 ### User Features
