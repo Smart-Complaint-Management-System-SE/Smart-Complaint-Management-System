@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 from admin import STATUSES
 from extensions import db
-from models import Complaint, ComplaintUpdate, get_category_names
+from models import Complaint, ComplaintUpdate, User, get_category_names
 
 complaint_bp = Blueprint("complaints", __name__)
 
@@ -66,10 +66,33 @@ def complaints():
     page = max(page or 1, 1)
     per_page = max(1, min(per_page or 10, 100))
 
-    # Fetch only the logged-in user's complaints
-    query = Complaint.query.filter_by(
-        user_id=session["user_id"]
-    ).order_by(
+    # Fetch complaints: if admin, show all campus complaints; if regular user, show only user's complaints
+    if session.get("role") == "admin":
+        query = Complaint.query
+    else:
+        query = Complaint.query.filter_by(
+            user_id=session["user_id"]
+        )
+
+    # Optional status filter
+    status = request.args.get("status")
+    if status in STATUSES:
+        query = query.filter_by(status=status)
+
+    # Optional category filter
+    category = request.args.get("category")
+    if category and category != "All":
+        query = query.filter_by(category=category)
+
+    # Optional search query
+    search = request.args.get("search", "").strip()
+    if search:
+        query = query.filter(
+            (Complaint.title.ilike(f"%{search}%")) |
+            (Complaint.description.ilike(f"%{search}%"))
+        )
+
+    query = query.order_by(
         Complaint.created_at.desc(),
         Complaint.id.desc()
     )
@@ -86,6 +109,11 @@ def complaints():
         request.args.get("format") == "json"
         or request.accept_mimetypes.best == "application/json"
     ):
+        users = (
+            {u.id: (u.name, u.email) for u in User.query.all()}
+            if session.get("role") == "admin"
+            else {}
+        )
         return jsonify({
             "page": pagination.page,
             "per_page": pagination.per_page,
@@ -101,6 +129,9 @@ def complaints():
                     "category": c.category,
                     "status": c.status,
                     "resolution": c.resolution,
+                    "user_id": c.user_id,
+                    "user_name": users.get(c.user_id, (None, None))[0],
+                    "user_email": users.get(c.user_id, (None, None))[1],
                     "created_at": (
                         c.created_at.isoformat()
                         if c.created_at else None
@@ -161,10 +192,15 @@ def complaint_detail(complaint_id):
             return jsonify({"error": "Authentication required."}), 401
         return redirect(url_for("auth.login"))
 
-    complaint = Complaint.query.filter_by(
-        id=complaint_id,
-        user_id=session["user_id"]
-    ).first_or_404()
+    if session.get("role") == "admin":
+        complaint = db.get_or_404(Complaint, complaint_id)
+    else:
+        complaint = Complaint.query.filter_by(
+            id=complaint_id,
+            user_id=session["user_id"]
+        ).first_or_404()
+
+    owner = db.session.get(User, complaint.user_id)
 
     updates = ComplaintUpdate.query.filter_by(
         complaint_id=complaint.id
@@ -181,6 +217,9 @@ def complaint_detail(complaint_id):
             "category": complaint.category,
             "status": complaint.status,
             "resolution": complaint.resolution,
+            "user_id": complaint.user_id,
+            "user_name": owner.name if owner else None,
+            "user_email": owner.email if owner else None,
             "created_at": (
                 complaint.created_at.isoformat()
                 if complaint.created_at else None

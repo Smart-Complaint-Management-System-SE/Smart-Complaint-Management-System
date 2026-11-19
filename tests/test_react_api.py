@@ -240,3 +240,49 @@ def test_spa_home_and_app_routes(client):
     res_app = client.get("/app")
     assert res_app.status_code == 200
     assert b"root" in res_app.data
+
+
+def test_admin_can_open_and_view_student_complaints(client):
+    # 1. Student logs in and creates a complaint
+    api_login(client, "test@example.com", "password123")
+    csrf = get_csrf(client)
+    create_res = client.post(
+        "/api/complaints",
+        json={
+            "title": "Broken Lab Microscope",
+            "description": "Lens broken in optics lab 301.",
+            "category": "Academic"
+        },
+        headers={"X-CSRF-Token": csrf}
+    )
+    assert create_res.status_code == 201
+    complaint_id = create_res.json["complaint"]["id"]
+
+    # 2. Admin logs in
+    api_login(client, "admin@example.com", "admin123")
+
+    # 3. Admin can view the student's complaint detail (previously failed with 404!)
+    detail_res = client.get(f"/complaints/{complaint_id}?format=json")
+    assert detail_res.status_code == 200
+    assert detail_res.json["id"] == complaint_id
+    assert detail_res.json["title"] == "Broken Lab Microscope"
+    assert detail_res.json["user_name"] == "Test User"
+    assert detail_res.json["user_email"] == "test@example.com"
+
+    # 4. Admin accessing /complaints?format=json sees all complaints, not 0
+    list_res = client.get("/complaints?format=json")
+    assert list_res.status_code == 200
+    assert list_res.json["total"] >= 1
+    assert any(c["id"] == complaint_id for c in list_res.json["complaints"])
+
+    # 5. Admin updates status via PATCH /complaints/<id>/status
+    csrf_admin = get_csrf(client)
+    patch_res = client.patch(
+        f"/complaints/{complaint_id}/status",
+        json={
+            "status": "In Progress"
+        },
+        headers={"X-CSRF-Token": csrf_admin}
+    )
+    assert patch_res.status_code == 200
+    assert patch_res.json["complaint"]["new_status"] == "In Progress"
